@@ -1,4 +1,5 @@
 import Sidebar from "./components/Sidebar";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -6,8 +7,7 @@ function App() {
       <Sidebar />
 
       <main className="main-content">
-        <h1>National AI-Driven Material Harmonization Platform</h1>
-        <p>One Nation – One Common Material Code</p>
+        <Dashboard />
       </main>
     </div>
   );
