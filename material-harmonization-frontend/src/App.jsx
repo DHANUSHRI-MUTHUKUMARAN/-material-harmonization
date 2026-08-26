@@ -19,12 +19,36 @@ function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/materials" element={<MaterialExplorer />} />
-            <Route path="/ai-matching" element={<AIMatching />} />
-            <Route path="/validation" element={<Validation />} />
-            <Route path="/national-codes" element={<NationalCodes />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/audit-trail" element={<AuditTrail />} />
+
+            <Route
+              path="/materials"
+              element={<MaterialExplorer />}
+            />
+
+            <Route
+              path="/ai-matching"
+              element={<AIMatching />}
+            />
+
+            <Route
+              path="/validation"
+              element={<Validation />}
+            />
+
+            <Route
+              path="/national-codes"
+              element={<NationalCodes />}
+            />
+
+            <Route
+              path="/analytics"
+              element={<Analytics />}
+            />
+
+            <Route
+              path="/audit-trail"
+              element={<AuditTrail />}
+            />
           </Routes>
         </main>
       </div>
