@@ -132,10 +132,16 @@ function Validation() {
         <div className="validation-actions">
           <button
             className="approve-btn"
-            onClick={() => setStatus("Approved")}
-          >
+            onClick={() => {
+                setStatus("Approved");
+
+                setTimeout(() => {
+                navigate("/national-codes");
+                }, 800);
+            }}
+            >
             ✓ Approve Mapping
-          </button>
+            </button>
 
           <button
             className="reject-btn"
