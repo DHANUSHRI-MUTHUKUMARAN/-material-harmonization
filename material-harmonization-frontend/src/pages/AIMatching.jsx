@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function AIMatching() {
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+
+  const navigate = useNavigate();
 
   const materials = [
     {
@@ -157,9 +160,21 @@ function AIMatching() {
                     </div>
 
                     <div className="match-actions">
-                      <button className="review-btn">
+                      <button
+                        className="review-btn"
+                        onClick={() =>
+                            navigate("/validation", {
+                            state: {
+                                sourceMaterial: materials.find(
+                                (material) => material.id === selectedMaterial
+                                ),
+                                matchedMaterial: match,
+                            },
+                            })
+                        }
+                        >
                         Send for Validation
-                      </button>
+                        </button>
 
                       <button className="details-btn">
                         View Details
