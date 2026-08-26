@@ -1,0 +1,58 @@
+const materials = [
+  {
+    id: 1,
+    code: "CPCL-VAL-1023",
+    description: "SS Ball Valve 2 Inch",
+    category: "Valve",
+    specification: "Stainless Steel, 2 Inch",
+    unit: "Nos",
+    cpse: "CPCL",
+  },
+  {
+    id: 2,
+    code: "ONGC-V-4567",
+    description: "Stainless Steel Ball Valve 50mm",
+    category: "Valve",
+    specification: "SS, 50 mm",
+    unit: "Nos",
+    cpse: "ONGC",
+  },
+  {
+    id: 3,
+    code: "BHEL-CAB-890",
+    description: "Copper Cable 10 Sqmm",
+    category: "Electrical",
+    specification: "Copper, 10 Sqmm",
+    unit: "Meters",
+    cpse: "BHEL",
+  },
+  {
+    id: 4,
+    code: "CPCL-BLT-2045",
+    description: "SS Hex Bolt M10",
+    category: "Fastener",
+    specification: "Stainless Steel, M10",
+    unit: "Nos",
+    cpse: "CPCL",
+  },
+  {
+    id: 5,
+    code: "ONGC-CAB-3321",
+    description: "Cu Electrical Cable 10mm²",
+    category: "Electrical",
+    specification: "Copper, 10 Sqmm",
+    unit: "Meters",
+    cpse: "ONGC",
+  },
+  {
+    id: 6,
+    code: "SAIL-PMP-7789",
+    description: "Centrifugal Water Pump",
+    category: "Pump",
+    specification: "5 HP, 415V",
+    unit: "Nos",
+    cpse: "SAIL",
+  },
+];
+
+export default materials;
