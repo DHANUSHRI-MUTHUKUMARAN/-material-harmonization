@@ -20,13 +20,12 @@ function HarmonizationRecommendation() {
   const [recommendation, setRecommendation] = useState(null);
   const [isApproving, setIsApproving] = useState(false);
 
-  /* LOAD AI RECOMMENDATION */
-
   useEffect(() => {
     const loadRecommendation = async () => {
       try {
         if (matchId) {
-          const data = await getHarmonizationRecommendation(matchId);
+          const data =
+            await getHarmonizationRecommendation(matchId);
 
           setRecommendation(data);
         }
@@ -41,7 +40,45 @@ function HarmonizationRecommendation() {
     loadRecommendation();
   }, [matchId]);
 
-  /* APPROVE HARMONIZATION */
+  // ============================================
+  // CONFIDENCE-BASED INTERVENTION LOGIC
+  // ============================================
+
+  const getReviewPolicy = () => {
+    if (similarity >= 95) {
+      return {
+        level: "Low",
+        action: "Fast-Track Approval",
+        message:
+          "High-confidence, low-risk recommendation. Eligible for fast-track approval.",
+        className: "low-risk",
+      };
+    }
+
+    if (similarity >= 85) {
+      return {
+        level: "Medium",
+        action: "Human Review Recommended",
+        message:
+          "Moderate-confidence recommendation. Human review is recommended before approval.",
+        className: "medium-risk",
+      };
+    }
+
+    return {
+      level: "High",
+      action: "Human Validation Required",
+      message:
+        "Low-confidence or higher-risk recommendation. Detailed human validation is required.",
+      className: "high-risk",
+    };
+  };
+
+  const reviewPolicy = getReviewPolicy();
+
+  // ============================================
+  // APPROVE HARMONIZATION
+  // ============================================
 
   const handleApprove = async () => {
     if (!recommendation || !sourceMaterial || !matchedMaterial) {
@@ -79,7 +116,9 @@ function HarmonizationRecommendation() {
     }
   };
 
-  /* MODIFY */
+  // ============================================
+  // MODIFY
+  // ============================================
 
   const handleModify = () => {
     alert(
@@ -87,7 +126,9 @@ function HarmonizationRecommendation() {
     );
   };
 
-  /* REJECT */
+  // ============================================
+  // REJECT
+  // ============================================
 
   const handleReject = () => {
     const confirmed = window.confirm(
@@ -101,12 +142,13 @@ function HarmonizationRecommendation() {
     }
   };
 
-  /* NO DATA */
+  // ============================================
+  // NO DATA
+  // ============================================
 
   if (!sourceMaterial || !matchedMaterial) {
     return (
       <div className="harmonization-page">
-
         <div className="validation-empty">
 
           <h2>No harmonization data available</h2>
@@ -124,17 +166,17 @@ function HarmonizationRecommendation() {
           </button>
 
         </div>
-
       </div>
     );
   }
 
-  /* LOADING */
+  // ============================================
+  // LOADING
+  // ============================================
 
   if (!recommendation) {
     return (
       <div className="harmonization-page">
-
         <div className="validation-empty">
 
           <h2>Generating AI Recommendation...</h2>
@@ -145,7 +187,6 @@ function HarmonizationRecommendation() {
           </p>
 
         </div>
-
       </div>
     );
   }
@@ -156,7 +197,6 @@ function HarmonizationRecommendation() {
       {/* MATERIAL CLUSTER */}
 
       <div className="page-header">
-
         <div>
 
           <p className="cluster-label">
@@ -172,7 +212,6 @@ function HarmonizationRecommendation() {
           </p>
 
         </div>
-
       </div>
 
 
@@ -180,9 +219,7 @@ function HarmonizationRecommendation() {
 
       <div className="related-material">
 
-        <span>
-          RELATED MATERIAL
-        </span>
+        <span>RELATED MATERIAL</span>
 
         <h3>
           {matchedMaterial.description}
@@ -231,8 +268,6 @@ function HarmonizationRecommendation() {
 
         <div className="recommendation-grid">
 
-          {/* STANDARDIZED DESCRIPTION */}
-
           <div className="recommendation-box">
 
             <span>
@@ -246,8 +281,6 @@ function HarmonizationRecommendation() {
           </div>
 
 
-          {/* EXTRACTED ATTRIBUTES */}
-
           <div className="recommendation-box">
 
             <span>
@@ -255,7 +288,6 @@ function HarmonizationRecommendation() {
             </span>
 
             <ul>
-
               {recommendation.attributes.map(
                 (attribute, index) => (
                   <li key={index}>
@@ -263,13 +295,10 @@ function HarmonizationRecommendation() {
                   </li>
                 )
               )}
-
             </ul>
 
           </div>
 
-
-          {/* CLASSIFICATION */}
 
           <div className="recommendation-box">
 
@@ -283,8 +312,6 @@ function HarmonizationRecommendation() {
 
           </div>
 
-
-          {/* NATIONAL MATERIAL CODE */}
 
           <div className="recommendation-box national-code">
 
@@ -303,6 +330,21 @@ function HarmonizationRecommendation() {
           </div>
 
         </div>
+
+      </div>
+
+
+      {/* CONFIDENCE / REVIEW POLICY */}
+
+      <div className={`review-policy ${reviewPolicy.className}`}>
+
+        <h3>
+          AI Review Policy: {reviewPolicy.action}
+        </h3>
+
+        <p>
+          {reviewPolicy.message}
+        </p>
 
       </div>
 
@@ -340,11 +382,11 @@ function HarmonizationRecommendation() {
         <div className="metric-box">
 
           <span>
-            Risk Level
+            Intervention Level
           </span>
 
           <strong>
-            {recommendation.riskLevel}
+            {reviewPolicy.level}
           </strong>
 
         </div>
@@ -396,7 +438,9 @@ function HarmonizationRecommendation() {
           disabled={isApproving}
         >
           {isApproving
-            ? "Approving..."
+            ? "Processing..."
+            : similarity >= 95
+            ? "⚡ Fast-Track Approve"
             : "✓ Approve Harmonization"}
         </button>
 

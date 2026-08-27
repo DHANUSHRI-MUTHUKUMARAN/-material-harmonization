@@ -1,124 +1,25 @@
 import { useEffect, useState } from "react";
+import { getNationalCodes } from "../services/materialService";
 
 function NationalCodes() {
-  const [generatedCodes, setGeneratedCodes] = useState([]);
+  const [nationalCodes, setNationalCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Approved harmonized material groups
-  const approvedMaterials = [
-    {
-      id: 1,
-      description: "Stainless Steel Ball Valve, DN50 / 2 Inch",
-      category: "Valve",
-      specification: "Stainless Steel, DN50 / 2 Inch",
-      nationalCode: "NMC-VAL-SS-BALL-0001",
-
-      materials: [
-        {
-          code: "CPCL-VAL-1023",
-          cpse: "CPCL",
-          description: "SS Ball Valve 2 Inch",
-        },
-        {
-          code: "ONGC-V-4567",
-          cpse: "ONGC",
-          description: "Stainless Steel Ball Valve 50mm",
-        },
-        {
-          code: "BHEL-V-245",
-          cpse: "BHEL",
-          description: "SS Ball Valve DN50",
-        },
-      ],
-    },
-
-    {
-      id: 2,
-      description: "Copper Electrical Cable, 10 Sqmm",
-      category: "Electrical",
-      specification: "Copper, 10 Sqmm",
-      nationalCode: "NMC-ELE-CAB-CU-0002",
-
-      materials: [
-        {
-          code: "BHEL-CAB-890",
-          cpse: "BHEL",
-          description: "Copper Cable 10 Sqmm",
-        },
-        {
-          code: "ONGC-CAB-3321",
-          cpse: "ONGC",
-          description: "Cu Electrical Cable 10mm²",
-        },
-      ],
-    },
-
-    {
-      id: 3,
-      description: "Stainless Steel Ball Valve, DN50",
-      category: "Valve",
-      specification: "Stainless Steel, DN50",
-      nationalCode: "NMC-VAL-SS-BALL-0003",
-
-      materials: [
-        {
-          code: "BHEL-V-245",
-          cpse: "BHEL",
-          description: "SS Ball Valve DN50",
-        },
-        {
-          code: "CPCL-VAL-1023",
-          cpse: "CPCL",
-          description: "SS Ball Valve 2 Inch",
-        },
-      ],
-    },
-  ];
-
-  // Load previously registered codes
   useEffect(() => {
-    const savedCodes =
-      JSON.parse(localStorage.getItem("nationalCodes")) || [];
+    const loadNationalCodes = async () => {
+      try {
+        const data = await getNationalCodes();
 
-    setGeneratedCodes(savedCodes);
-  }, []);
-
-  // Register approved national code
-  const generateCode = (material) => {
-    const alreadyExists = generatedCodes.find(
-      (item) => item.id === material.id
-    );
-
-    if (alreadyExists) {
-      return;
-    }
-
-    const newGeneratedCode = {
-      id: material.id,
-      code: material.nationalCode,
-      description: material.description,
-      category: material.category,
-      status: "Active",
+        setNationalCodes(data);
+      } catch (error) {
+        console.error("Failed to load National Material Codes:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const updatedCodes = [
-      ...generatedCodes,
-      newGeneratedCode,
-    ];
-
-    setGeneratedCodes(updatedCodes);
-
-    localStorage.setItem(
-      "nationalCodes",
-      JSON.stringify(updatedCodes)
-    );
-  };
-
-  // Get registered national code
-  const getGeneratedCode = (id) => {
-    return generatedCodes.find(
-      (item) => item.id === id
-    );
-  };
+    loadNationalCodes();
+  }, []);
 
   return (
     <div className="national-codes-page">
@@ -130,8 +31,8 @@ function NationalCodes() {
           <h1>Common National Material Codes</h1>
 
           <p>
-            Create and manage standardized national material codes for
-            approved harmonized material groups.
+            Approved harmonized materials mapped to their common National
+            Material Codes.
           </p>
         </div>
       </div>
@@ -142,26 +43,41 @@ function NationalCodes() {
         <h3>One Nation – One Material Code</h3>
 
         <p>
-          Multiple existing CPSE material codes can be mapped to one
-          common national material code while maintaining complete
-          traceability.
+          Multiple existing CPSE material codes are mapped to one common
+          National Material Code while maintaining complete traceability.
         </p>
       </div>
 
-      {/* APPROVED MATERIAL GROUPS */}
+      {/* LOADING */}
 
-      <div className="national-codes-list">
+      {loading ? (
+        <div className="validation-empty">
+          <h2>Loading National Material Codes...</h2>
+        </div>
+      ) : nationalCodes.length === 0 ? (
 
-        {approvedMaterials.map((material) => {
+        /* EMPTY STATE */
 
-          const generatedCode =
-            getGeneratedCode(material.id);
+        <div className="validation-empty">
+          <h2>No approved harmonizations yet</h2>
 
-          return (
+          <p>
+            National Material Codes will appear here after an AI harmonization
+            recommendation is approved.
+          </p>
+        </div>
+
+      ) : (
+
+        /* NATIONAL CODE LIST */
+
+        <div className="national-codes-list">
+
+          {nationalCodes.map((item) => (
 
             <div
               className="national-code-card"
-              key={material.id}
+              key={item.id}
             >
 
               {/* CARD HEADER */}
@@ -171,109 +87,101 @@ function NationalCodes() {
                 <div>
 
                   <span className="card-label">
-                    APPROVED MATERIAL GROUP
+                    APPROVED HARMONIZED MATERIAL
                   </span>
 
                   <h2>
-                    {material.description}
+                    {item.description}
                   </h2>
 
                   <p>
-                    {material.specification}
+                    {item.classification}
                   </p>
 
                 </div>
 
                 {/* NATIONAL CODE */}
 
-                {generatedCode ? (
+                <div className="generated-code-section">
 
-                  <div className="generated-code-section">
-
-                    <div className="generated-code">
-                      {generatedCode.code}
-                    </div>
-
-                    <span className="code-status">
-                      Active
-                    </span>
-
+                  <div className="generated-code">
+                    {item.code}
                   </div>
 
-                ) : (
+                  <span className="code-status">
+                    {item.status}
+                  </span>
 
-                  <button
-                    className="generate-code-btn"
-                    onClick={() =>
-                      generateCode(material)
-                    }
-                  >
-                    Register National Code
-                  </button>
-
-                )}
+                </div>
 
               </div>
 
-              {/* MAPPED CPSE MATERIALS */}
+              {/* MATERIAL DETAILS */}
 
               <div className="mapped-materials">
 
                 <h3>
-                  Mapped CPSE Material Codes
+                  Harmonized CPSE Material Codes
                 </h3>
 
                 <div className="mapping-table">
 
-                  {material.materials.map(
-                    (item, index) => (
+                  {/* SOURCE MATERIAL */}
 
-                      <div
-                        className="mapping-row"
-                        key={index}
-                      >
+                  <div className="mapping-row">
 
-                        <span className="mapping-cpse">
-                          {item.cpse}
-                        </span>
+                    <span className="mapping-cpse">
+                      {item.sourceMaterial.cpse}
+                    </span>
 
-                        <span className="mapping-code">
-                          {item.code}
-                        </span>
+                    <span className="mapping-code">
+                      {item.sourceMaterial.code}
+                    </span>
 
-                        <span className="mapping-description">
-                          {item.description}
-                        </span>
+                    <span className="mapping-description">
+                      {item.sourceMaterial.description}
+                    </span>
 
-                      </div>
+                  </div>
 
-                    )
-                  )}
+                  {/* MATCHED MATERIAL */}
+
+                  <div className="mapping-row">
+
+                    <span className="mapping-cpse">
+                      {item.matchedMaterial.cpse}
+                    </span>
+
+                    <span className="mapping-code">
+                      {item.matchedMaterial.code}
+                    </span>
+
+                    <span className="mapping-description">
+                      {item.matchedMaterial.description}
+                    </span>
+
+                  </div>
 
                 </div>
 
               </div>
 
-              {/* SUCCESS MESSAGE */}
+              {/* ADDITIONAL DETAILS */}
 
-              {generatedCode && (
+              <div className="code-generated-message">
 
-                <div className="code-generated-message">
+                ✓ National Material Code approved and mapped to the
+                corresponding CPSE material records.
 
-                  ✓ National Material Code successfully registered and
-                  mapped to all corresponding CPSE material codes.
-
-                </div>
-
-              )}
+              </div>
 
             </div>
 
-          );
+          ))}
 
-        })}
+        </div>
 
-      </div>
+      )}
 
     </div>
   );
