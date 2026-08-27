@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function NationalCodes() {
   const [generatedCodes, setGeneratedCodes] = useState([]);
 
+  // Approved harmonized material groups
   const approvedMaterials = [
     {
       id: 1,
-      description: "Stainless Steel Ball Valve",
+      description: "Stainless Steel Ball Valve, DN50 / 2 Inch",
       category: "Valve",
-      specification: "SS, DN50 / 2 Inch",
+      specification: "Stainless Steel, DN50 / 2 Inch",
+      nationalCode: "NMC-VAL-SS-BALL-0001",
+
       materials: [
         {
           code: "CPCL-VAL-1023",
@@ -27,11 +30,14 @@ function NationalCodes() {
         },
       ],
     },
+
     {
       id: 2,
-      description: "Copper Electrical Cable",
+      description: "Copper Electrical Cable, 10 Sqmm",
       category: "Electrical",
       specification: "Copper, 10 Sqmm",
+      nationalCode: "NMC-ELE-CAB-CU-0002",
+
       materials: [
         {
           code: "BHEL-CAB-890",
@@ -45,113 +51,230 @@ function NationalCodes() {
         },
       ],
     },
+
+    {
+      id: 3,
+      description: "Stainless Steel Ball Valve, DN50",
+      category: "Valve",
+      specification: "Stainless Steel, DN50",
+      nationalCode: "NMC-VAL-SS-BALL-0003",
+
+      materials: [
+        {
+          code: "BHEL-V-245",
+          cpse: "BHEL",
+          description: "SS Ball Valve DN50",
+        },
+        {
+          code: "CPCL-VAL-1023",
+          cpse: "CPCL",
+          description: "SS Ball Valve 2 Inch",
+        },
+      ],
+    },
   ];
 
-  const generateCode = (material) => {
-    const newCode = `NMC-${material.category
-      .substring(0, 3)
-      .toUpperCase()}-${String(material.id).padStart(4, "0")}`;
+  // Load previously registered codes
+  useEffect(() => {
+    const savedCodes =
+      JSON.parse(localStorage.getItem("nationalCodes")) || [];
 
-    if (!generatedCodes.find((item) => item.id === material.id)) {
-      setGeneratedCodes([
-        ...generatedCodes,
-        {
-          id: material.id,
-          code: newCode,
-        },
-      ]);
+    setGeneratedCodes(savedCodes);
+  }, []);
+
+  // Register approved national code
+  const generateCode = (material) => {
+    const alreadyExists = generatedCodes.find(
+      (item) => item.id === material.id
+    );
+
+    if (alreadyExists) {
+      return;
     }
+
+    const newGeneratedCode = {
+      id: material.id,
+      code: material.nationalCode,
+      description: material.description,
+      category: material.category,
+      status: "Active",
+    };
+
+    const updatedCodes = [
+      ...generatedCodes,
+      newGeneratedCode,
+    ];
+
+    setGeneratedCodes(updatedCodes);
+
+    localStorage.setItem(
+      "nationalCodes",
+      JSON.stringify(updatedCodes)
+    );
   };
 
+  // Get registered national code
   const getGeneratedCode = (id) => {
-    return generatedCodes.find((item) => item.id === id)?.code;
+    return generatedCodes.find(
+      (item) => item.id === id
+    );
   };
 
   return (
     <div className="national-codes-page">
+
+      {/* PAGE HEADER */}
+
       <div className="page-header">
         <div>
           <h1>Common National Material Codes</h1>
 
           <p>
-            Create standardized national material codes for approved and
-            harmonized material groups.
+            Create and manage standardized national material codes for
+            approved harmonized material groups.
           </p>
         </div>
       </div>
+
+      {/* INFORMATION */}
 
       <div className="national-info">
         <h3>One Nation – One Material Code</h3>
 
         <p>
-          Multiple existing CPSE material codes can be mapped to one common
-          national material code while maintaining complete traceability.
+          Multiple existing CPSE material codes can be mapped to one
+          common national material code while maintaining complete
+          traceability.
         </p>
       </div>
 
+      {/* APPROVED MATERIAL GROUPS */}
+
       <div className="national-codes-list">
+
         {approvedMaterials.map((material) => {
-          const nationalCode = getGeneratedCode(material.id);
+
+          const generatedCode =
+            getGeneratedCode(material.id);
 
           return (
-            <div className="national-code-card" key={material.id}>
+
+            <div
+              className="national-code-card"
+              key={material.id}
+            >
+
+              {/* CARD HEADER */}
+
               <div className="national-code-header">
+
                 <div>
+
                   <span className="card-label">
                     APPROVED MATERIAL GROUP
                   </span>
 
-                  <h2>{material.description}</h2>
+                  <h2>
+                    {material.description}
+                  </h2>
 
-                  <p>{material.specification}</p>
+                  <p>
+                    {material.specification}
+                  </p>
+
                 </div>
 
-                {nationalCode ? (
-                  <div className="generated-code">
-                    {nationalCode}
+                {/* NATIONAL CODE */}
+
+                {generatedCode ? (
+
+                  <div className="generated-code-section">
+
+                    <div className="generated-code">
+                      {generatedCode.code}
+                    </div>
+
+                    <span className="code-status">
+                      Active
+                    </span>
+
                   </div>
+
                 ) : (
+
                   <button
                     className="generate-code-btn"
-                    onClick={() => generateCode(material)}
+                    onClick={() =>
+                      generateCode(material)
+                    }
                   >
-                    Generate National Code
+                    Register National Code
                   </button>
+
                 )}
+
               </div>
+
+              {/* MAPPED CPSE MATERIALS */}
 
               <div className="mapped-materials">
-                <h3>Mapped CPSE Material Codes</h3>
+
+                <h3>
+                  Mapped CPSE Material Codes
+                </h3>
 
                 <div className="mapping-table">
-                  {material.materials.map((item, index) => (
-                    <div className="mapping-row" key={index}>
-                      <span className="mapping-cpse">
-                        {item.cpse}
-                      </span>
 
-                      <span className="mapping-code">
-                        {item.code}
-                      </span>
+                  {material.materials.map(
+                    (item, index) => (
 
-                      <span className="mapping-description">
-                        {item.description}
-                      </span>
-                    </div>
-                  ))}
+                      <div
+                        className="mapping-row"
+                        key={index}
+                      >
+
+                        <span className="mapping-cpse">
+                          {item.cpse}
+                        </span>
+
+                        <span className="mapping-code">
+                          {item.code}
+                        </span>
+
+                        <span className="mapping-description">
+                          {item.description}
+                        </span>
+
+                      </div>
+
+                    )
+                  )}
+
                 </div>
+
               </div>
 
-              {nationalCode && (
+              {/* SUCCESS MESSAGE */}
+
+              {generatedCode && (
+
                 <div className="code-generated-message">
-                  ✓ National Material Code successfully generated and mapped
-                  to all corresponding CPSE material codes.
+
+                  ✓ National Material Code successfully registered and
+                  mapped to all corresponding CPSE material codes.
+
                 </div>
+
               )}
+
             </div>
+
           );
+
         })}
+
       </div>
+
     </div>
   );
 }

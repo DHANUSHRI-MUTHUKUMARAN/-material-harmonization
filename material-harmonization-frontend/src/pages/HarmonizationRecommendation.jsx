@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   getHarmonizationRecommendation,
+  approveHarmonization,
 } from "../services/materialService";
 
 function HarmonizationRecommendation() {
@@ -31,13 +32,29 @@ function HarmonizationRecommendation() {
     loadRecommendation();
   }, [matchId]);
 
-  const handleApprove = () => {
-    alert("Harmonization recommendation approved!");
+  const handleApprove = async () => {
+  try {
 
-    setTimeout(() => {
-      navigate("/national-codes");
-    }, 500);
-  };
+    await approveHarmonization(
+      sourceMaterial,
+      matchedMaterial,
+      recommendation
+    );
+
+    alert(
+      "Harmonization approved and National Material Code created!"
+    );
+
+    navigate("/national-codes");
+
+  } catch (error) {
+
+    alert(
+      "Something went wrong while approving the harmonization."
+    );
+
+  }
+};
 
   const handleModify = () => {
     alert("Modify recommendation feature will open here.");

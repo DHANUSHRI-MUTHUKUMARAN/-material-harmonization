@@ -265,3 +265,50 @@ export const getHarmonizationRecommendation = async (
 ) => {
   return harmonizationRecommendations[Number(id)];
 };
+// ============================================
+// NATIONAL MATERIAL CODES
+// ============================================
+
+const nationalCodes = [];
+
+
+// Approve harmonization and add National Material Code
+
+export const approveHarmonization = async (
+  sourceMaterial,
+  matchedMaterial,
+  recommendation
+) => {
+
+  const newNationalCode = {
+    id: Date.now(),
+
+    code: recommendation.nationalCode,
+
+    description:
+      recommendation.standardizedDescription,
+
+    classification:
+      recommendation.classification,
+
+    riskLevel:
+      recommendation.riskLevel,
+
+    status: "Approved",
+
+    sourceMaterial,
+
+    matchedMaterial,
+  };
+
+  nationalCodes.push(newNationalCode);
+
+  return newNationalCode;
+};
+
+
+// Get all approved National Material Codes
+
+export const getNationalCodes = async () => {
+  return nationalCodes;
+};
