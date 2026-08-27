@@ -50,13 +50,11 @@ const materials = [
 // MATERIAL SERVICE FUNCTIONS
 // ============================================
 
-// Get all materials
 export const getMaterials = async () => {
   return materials;
 };
 
 
-// Get one material by ID
 export const getMaterialById = async (id) => {
   return materials.find(
     (material) => material.id === Number(id)
@@ -131,13 +129,11 @@ const aiMatches = [
 ];
 
 
-// Get AI-generated material matches
 export const getAIMatches = async () => {
   return aiMatches;
 };
 
 
-// Get one AI match by ID
 export const getAIMatchById = async (id) => {
   return aiMatches.find(
     (match) => match.id === Number(id)
@@ -172,13 +168,11 @@ const validationMappings = [
 ];
 
 
-// Get validation mappings
 export const getValidationMappings = async () => {
   return validationMappings;
 };
 
 
-// Update validation status
 export const updateValidationStatus = async (
   id,
   status
@@ -259,20 +253,19 @@ const harmonizationRecommendations = {
 };
 
 
-// Get AI Harmonization Recommendation
 export const getHarmonizationRecommendation = async (
   id
 ) => {
   return harmonizationRecommendations[Number(id)];
 };
+
+
 // ============================================
 // NATIONAL MATERIAL CODES
 // ============================================
 
 const nationalCodes = [];
 
-
-// Approve harmonization and add National Material Code
 
 export const approveHarmonization = async (
   sourceMaterial,
@@ -303,12 +296,91 @@ export const approveHarmonization = async (
 
   nationalCodes.push(newNationalCode);
 
+
+  // Add approval to audit trail
+
+  await addAuditLog({
+    action: "Harmonization Approved",
+
+    material:
+      recommendation.standardizedDescription,
+
+    materialCode:
+      recommendation.nationalCode,
+
+    user: "Material Validation Officer",
+
+    status: "Approved",
+  });
+
+
   return newNationalCode;
 };
 
 
-// Get all approved National Material Codes
-
 export const getNationalCodes = async () => {
   return nationalCodes;
+};
+
+
+// ============================================
+// AUDIT TRAIL
+// ============================================
+
+const auditLogs = [
+  {
+    id: 1,
+
+    action: "AI Match Generated",
+
+    material: "SS Ball Valve 2 Inch",
+
+    materialCode: "CPCL-VAL-1023",
+
+    user: "AI Matching Engine",
+
+    time: "System Generated",
+
+    status: "AI Generated",
+  },
+];
+
+
+// Add a new audit activity
+
+export const addAuditLog = async ({
+  action,
+  material,
+  materialCode,
+  user,
+  status,
+}) => {
+
+  const newLog = {
+    id: Date.now(),
+
+    action,
+
+    material,
+
+    materialCode,
+
+    user,
+
+    time: new Date().toLocaleString(),
+
+    status,
+  };
+
+
+  auditLogs.unshift(newLog);
+
+  return newLog;
+};
+
+
+// Get all audit activities
+
+export const getAuditLogs = async () => {
+  return auditLogs;
 };
