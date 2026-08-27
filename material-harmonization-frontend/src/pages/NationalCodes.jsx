@@ -10,9 +10,12 @@ function NationalCodes() {
       try {
         const data = await getNationalCodes();
 
-        setNationalCodes(data);
+        setNationalCodes(data || []);
       } catch (error) {
-        console.error("Failed to load National Material Codes:", error);
+        console.error(
+          "Failed to load National Material Codes:",
+          error
+        );
       } finally {
         setLoading(false);
       }
@@ -31,40 +34,57 @@ function NationalCodes() {
           <h1>Common National Material Codes</h1>
 
           <p>
-            Approved harmonized materials mapped to their common National
-            Material Codes.
+            Approved harmonized materials mapped to their common
+            National Material Codes.
           </p>
         </div>
       </div>
 
+
       {/* INFORMATION */}
 
       <div className="national-info">
-        <h3>One Nation – One Material Code</h3>
+
+        <h3>
+          One Nation – One Material Code
+        </h3>
 
         <p>
-          Multiple existing CPSE material codes are mapped to one common
-          National Material Code while maintaining complete traceability.
+          Multiple existing CPSE material codes are mapped to one
+          common National Material Code while maintaining complete
+          traceability.
         </p>
+
       </div>
+
 
       {/* LOADING */}
 
       {loading ? (
+
         <div className="validation-empty">
-          <h2>Loading National Material Codes...</h2>
+
+          <h2>
+            Loading National Material Codes...
+          </h2>
+
         </div>
+
       ) : nationalCodes.length === 0 ? (
 
         /* EMPTY STATE */
 
         <div className="validation-empty">
-          <h2>No approved harmonizations yet</h2>
+
+          <h2>
+            No approved harmonizations yet
+          </h2>
 
           <p>
-            National Material Codes will appear here after an AI harmonization
-            recommendation is approved.
+            National Material Codes will appear here after an AI
+            harmonization recommendation is approved.
           </p>
+
         </div>
 
       ) : (
@@ -100,23 +120,29 @@ function NationalCodes() {
 
                 </div>
 
+
                 {/* NATIONAL CODE */}
 
                 <div className="generated-code-section">
 
                   <div className="generated-code">
+
                     {item.code}
+
                   </div>
 
                   <span className="code-status">
+
                     {item.status}
+
                   </span>
 
                 </div>
 
               </div>
 
-              {/* MATERIAL DETAILS */}
+
+              {/* HARMONIZED MATERIALS */}
 
               <div className="mapped-materials">
 
@@ -126,47 +152,89 @@ function NationalCodes() {
 
                 <div className="mapping-table">
 
+
                   {/* SOURCE MATERIAL */}
 
-                  <div className="mapping-row">
+                  {item.sourceMaterial && (
 
-                    <span className="mapping-cpse">
-                      {item.sourceMaterial.cpse}
-                    </span>
+                    <div className="mapping-row">
 
-                    <span className="mapping-code">
-                      {item.sourceMaterial.code}
-                    </span>
+                      <span className="mapping-cpse">
 
-                    <span className="mapping-description">
-                      {item.sourceMaterial.description}
-                    </span>
+                        {item.sourceMaterial.cpse}
 
-                  </div>
+                      </span>
+
+                      <span className="mapping-code">
+
+                        {item.sourceMaterial.code}
+
+                      </span>
+
+                      <span className="mapping-description">
+
+                        {item.sourceMaterial.description}
+
+                      </span>
+
+                    </div>
+
+                  )}
+
 
                   {/* MATCHED MATERIAL */}
 
-                  <div className="mapping-row">
+                  {item.matchedMaterial && (
 
-                    <span className="mapping-cpse">
-                      {item.matchedMaterial.cpse}
-                    </span>
+                    <div className="mapping-row">
 
-                    <span className="mapping-code">
-                      {item.matchedMaterial.code}
-                    </span>
+                      <span className="mapping-cpse">
 
-                    <span className="mapping-description">
-                      {item.matchedMaterial.description}
-                    </span>
+                        {item.matchedMaterial.cpse}
 
-                  </div>
+                      </span>
+
+                      <span className="mapping-code">
+
+                        {item.matchedMaterial.code}
+
+                      </span>
+
+                      <span className="mapping-description">
+
+                        {item.matchedMaterial.description}
+
+                      </span>
+
+                    </div>
+
+                  )}
 
                 </div>
 
               </div>
 
-              {/* ADDITIONAL DETAILS */}
+
+              {/* RISK LEVEL */}
+
+              {item.riskLevel && (
+
+                <div className="code-risk-info">
+
+                  <span>
+                    Risk Level:
+                  </span>
+
+                  <strong>
+                    {item.riskLevel}
+                  </strong>
+
+                </div>
+
+              )}
+
+
+              {/* SUCCESS MESSAGE */}
 
               <div className="code-generated-message">
 

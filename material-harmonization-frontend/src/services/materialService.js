@@ -261,17 +261,75 @@ export const getHarmonizationRecommendation = async (
 
 
 // ============================================
+// SAFE LOCAL STORAGE HELPER
+// ============================================
+
+const getStoredData = (key, defaultValue) => {
+  try {
+    const storedData = localStorage.getItem(key);
+
+    if (!storedData) {
+      return defaultValue;
+    }
+
+    return JSON.parse(storedData);
+
+  } catch (error) {
+
+    console.error(
+      `Failed to load ${key} from localStorage:`,
+      error
+    );
+
+    return defaultValue;
+  }
+};
+
+
+// ============================================
 // NATIONAL MATERIAL CODES
 // ============================================
 
-const nationalCodes = [];
+// Load saved National Material Codes
 
+const nationalCodes = getStoredData(
+  "nationalCodes",
+  []
+);
+
+
+// Approve harmonization and create National Material Code
 
 export const approveHarmonization = async (
   sourceMaterial,
   matchedMaterial,
   recommendation
 ) => {
+
+  if (
+    !sourceMaterial ||
+    !matchedMaterial ||
+    !recommendation
+  ) {
+    throw new Error(
+      "Required harmonization data is missing."
+    );
+  }
+
+
+  // Prevent duplicate National Material Codes
+
+  const existingCode = nationalCodes.find(
+    (item) =>
+      item.code === recommendation.nationalCode
+  );
+
+  if (existingCode) {
+    return existingCode;
+  }
+
+
+  // Create new National Material Code
 
   const newNationalCode = {
     id: Date.now(),
@@ -294,10 +352,21 @@ export const approveHarmonization = async (
     matchedMaterial,
   };
 
-  nationalCodes.push(newNationalCode);
+
+  // Add newest code at the top
+
+  nationalCodes.unshift(newNationalCode);
 
 
-  // Add approval to audit trail
+  // Save permanently
+
+  localStorage.setItem(
+    "nationalCodes",
+    JSON.stringify(nationalCodes)
+  );
+
+
+  // Add approval to Audit Trail
 
   await addAuditLog({
     action: "Harmonization Approved",
@@ -308,15 +377,19 @@ export const approveHarmonization = async (
     materialCode:
       recommendation.nationalCode,
 
-    user: "Material Validation Officer",
+    user:
+      "Material Validation Officer",
 
-    status: "Approved",
+    status:
+      "Approved",
   });
 
 
   return newNationalCode;
 };
 
+
+// Get all approved National Material Codes
 
 export const getNationalCodes = async () => {
   return nationalCodes;
@@ -327,13 +400,9 @@ export const getNationalCodes = async () => {
 // AUDIT TRAIL
 // ============================================
 
-// Load saved audit logs from localStorage
+// Default audit logs
 
-const savedAuditLogs = JSON.parse(
-  localStorage.getItem("auditLogs")
-);
-
-const auditLogs = savedAuditLogs || [
+const defaultAuditLogs = [
   {
     id: 1,
 
@@ -350,6 +419,14 @@ const auditLogs = savedAuditLogs || [
     status: "AI Generated",
   },
 ];
+
+
+// Load saved audit logs
+
+const auditLogs = getStoredData(
+  "auditLogs",
+  defaultAuditLogs
+);
 
 
 // Add a new audit activity
@@ -384,7 +461,7 @@ export const addAuditLog = async ({
   auditLogs.unshift(newLog);
 
 
-  // Save logs permanently in browser storage
+  // Save permanently
 
   localStorage.setItem(
     "auditLogs",
