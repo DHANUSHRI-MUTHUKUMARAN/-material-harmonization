@@ -106,8 +106,46 @@ const aiMatches = [
     status: "Pending",
   },
 ];
-
-// Get AI-generated material matches
+// connecting the AI matching data to the service fn
+// get AI-generated material matches
 export const getAIMatches = async () => {
   return aiMatches;
+};
+// Mock validation data
+
+const validationMappings = [
+  {
+    id: 1,
+    sourceMaterial: {
+      code: "CPCL-VAL-1023",
+      description: "SS Ball Valve 2 Inch",
+      cpse: "CPCL",
+    },
+    matchedMaterial: {
+      code: "ONGC-V-4567",
+      description: "Stainless Steel Ball Valve 50mm",
+      cpse: "ONGC",
+    },
+    similarity: 96,
+    matchType: "Near Duplicate",
+    status: "Pending",
+  },
+];
+
+// Get validation mappings
+export const getValidationMappings = async () => {
+  return validationMappings;
+};
+
+// Update validation status
+export const updateValidationStatus = async (id, status) => {
+  const mapping = validationMappings.find(
+    (item) => item.id === Number(id)
+  );
+
+  if (mapping) {
+    mapping.status = status;
+  }
+
+  return mapping;
 };

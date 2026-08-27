@@ -1,14 +1,58 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import {
+  getValidationMappings,
+  updateValidationStatus,
+} from "../services/materialService";
 
 function Validation() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [validationMappings, setValidationMappings] = useState([]);
   const [status, setStatus] = useState("Pending");
 
+  useEffect(() => {
+    const loadValidationMappings = async () => {
+      const data = await getValidationMappings();
+      setValidationMappings(data);
+    };
+
+    loadValidationMappings();
+  }, []);
+
+  // Data coming from AI Matching page
   const sourceMaterial = location.state?.sourceMaterial;
   const matchedMaterial = location.state?.matchedMaterial;
+
+  // Get the first validation mapping for service integration
+  const currentMapping = validationMappings[0];
+
+  const handleApprove = async () => {
+    if (currentMapping) {
+      await updateValidationStatus(
+        currentMapping.id,
+        "Approved"
+      );
+    }
+
+    setStatus("Approved");
+
+    setTimeout(() => {
+      navigate("/national-codes");
+    }, 800);
+  };
+
+  const handleReject = async () => {
+    if (currentMapping) {
+      await updateValidationStatus(
+        currentMapping.id,
+        "Rejected"
+      );
+    }
+
+    setStatus("Rejected");
+  };
 
   if (!sourceMaterial || !matchedMaterial) {
     return (
@@ -103,12 +147,16 @@ function Validation() {
 
             <div>
               <span>AI Confidence</span>
-              <strong>{matchedMaterial.confidence}%</strong>
+              <strong>
+                {location.state?.similarity ?? matchedMaterial.confidence ?? 0}%
+              </strong>
             </div>
 
             <div>
               <span>Match Type</span>
-              <strong>{matchedMaterial.matchType}</strong>
+              <strong>
+                {location.state?.matchType ?? matchedMaterial.matchType}
+              </strong>
             </div>
           </div>
         </div>
@@ -120,9 +168,15 @@ function Validation() {
         <h3>AI Matching Explanation</h3>
 
         <ul>
-          {matchedMaterial.reasons.map((reason, index) => (
+          {matchedMaterial.reasons?.map((reason, index) => (
             <li key={index}>{reason}</li>
-          ))}
+          )) || (
+            <>
+              <li>Material descriptions show strong semantic similarity.</li>
+              <li>Technical attributes indicate a potential equivalent material.</li>
+              <li>Cross-CPSE AI matching identified this recommendation.</li>
+            </>
+          )}
         </ul>
       </div>
 
@@ -132,29 +186,21 @@ function Validation() {
         <div className="validation-actions">
           <button
             className="approve-btn"
-            onClick={() => {
-                setStatus("Approved");
-
-                setTimeout(() => {
-                navigate("/national-codes");
-                }, 800);
-            }}
-            >
+            onClick={handleApprove}
+          >
             ✓ Approve Mapping
-            </button>
+          </button>
 
           <button
             className="reject-btn"
-            onClick={() => setStatus("Rejected")}
+            onClick={handleReject}
           >
             ✕ Reject Mapping
           </button>
         </div>
       ) : (
         <div className="validation-result">
-          <h3>
-            Mapping {status}
-          </h3>
+          <h3>Mapping {status}</h3>
 
           <p>
             The validation decision has been recorded for this material
