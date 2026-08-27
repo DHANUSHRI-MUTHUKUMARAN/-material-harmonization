@@ -30,6 +30,7 @@ function AIMatching() {
     (match) => match.id === selectedMaterial
   );
 
+  // Get the selected source material
   const selectedSourceMaterial = materials.find(
     (material) => material.id === selectedMaterial
   );
@@ -117,22 +118,24 @@ function AIMatching() {
 
               {/* SOURCE MATERIAL */}
 
-              <div className="cluster-source-card">
+              {selectedSourceMaterial && (
+                <div className="cluster-source-card">
 
-                <div className="cluster-label">
-                  SOURCE MATERIAL
+                  <div className="cluster-label">
+                    SOURCE MATERIAL
+                  </div>
+
+                  <h3>
+                    {selectedSourceMaterial.description}
+                  </h3>
+
+                  <p>
+                    {selectedSourceMaterial.code} •{" "}
+                    {selectedSourceMaterial.cpse}
+                  </p>
+
                 </div>
-
-                <h3>
-                  {selectedSourceMaterial.description}
-                </h3>
-
-                <p>
-                  {selectedSourceMaterial.code} •{" "}
-                  {selectedSourceMaterial.cpse}
-                </p>
-
-              </div>
+              )}
 
               {/* MATCHED MATERIAL */}
 
@@ -143,7 +146,6 @@ function AIMatching() {
                 </div>
 
                 {selectedMatch && (
-
                   <div className="ai-match-card">
 
                     <div className="match-top">
@@ -170,7 +172,6 @@ function AIMatching() {
                     </div>
 
                   </div>
-
                 )}
 
               </div>
@@ -181,6 +182,7 @@ function AIMatching() {
 
                 <div>
                   <span>Cluster Size</span>
+
                   <strong>
                     {selectedMatch ? 2 : 1} Materials
                   </strong>
@@ -188,6 +190,7 @@ function AIMatching() {
 
                 <div>
                   <span>AI Confidence</span>
+
                   <strong>
                     {selectedMatch?.similarity || 0}%
                   </strong>
@@ -195,6 +198,7 @@ function AIMatching() {
 
                 <div>
                   <span>Match Type</span>
+
                   <strong>
                     {selectedMatch?.matchType || "No Match"}
                   </strong>
@@ -204,30 +208,35 @@ function AIMatching() {
 
               {/* MAIN ACTION */}
 
-              <div className="harmonization-action">
+              {selectedMatch && selectedSourceMaterial && (
+                <div className="harmonization-action">
 
-                <button
-                  className="review-btn"
-                  onClick={() =>
-                    navigate("/harmonization-recommendation", {
+                  <button
+                    className="review-btn"
+                    onClick={() =>
+                      navigate("/harmonization-recommendation", {
                         state: {
-                        sourceMaterial: selectedSourceMaterial,
-                        matchedMaterial: match.matchedMaterial,
-                        similarity: match.similarity,
-                        matchType: match.matchType,
+                          sourceMaterial: selectedSourceMaterial,
+                          matchedMaterial:
+                            selectedMatch.matchedMaterial,
+                          similarity:
+                            selectedMatch.similarity,
+                          matchType:
+                            selectedMatch.matchType,
                         },
-                    })
+                      })
                     }
-                >
-                  Generate Harmonization Recommendation →
-                </button>
+                  >
+                    Generate Harmonization Recommendation →
+                  </button>
 
-                <p>
-                  AI will generate a standardized description,
-                  classification, and proposed National Material Code.
-                </p>
+                  <p>
+                    AI will generate a standardized description,
+                    classification, and proposed National Material Code.
+                  </p>
 
-              </div>
+                </div>
+              )}
 
             </>
           )}
