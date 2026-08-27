@@ -1,220 +1,337 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  getValidationMappings,
-  updateValidationStatus,
-} from "../services/materialService";
 
 function Validation() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [validationMappings, setValidationMappings] = useState([]);
   const [status, setStatus] = useState("Pending");
 
-  useEffect(() => {
-    const loadValidationMappings = async () => {
-      const data = await getValidationMappings();
-      setValidationMappings(data);
-    };
-
-    loadValidationMappings();
-  }, []);
-
-  // Data coming from AI Matching page
+  // Data coming from AI Harmonization page
   const sourceMaterial = location.state?.sourceMaterial;
   const matchedMaterial = location.state?.matchedMaterial;
 
-  // Get the first validation mapping for service integration
-  const currentMapping = validationMappings[0];
+  const similarity = location.state?.similarity ?? 0;
+  const matchType = location.state?.matchType ?? "Potential Match";
 
-  const handleApprove = async () => {
-    if (currentMapping) {
-      await updateValidationStatus(
-        currentMapping.id,
-        "Approved"
-      );
-    }
-
-    setStatus("Approved");
-
-    setTimeout(() => {
-      navigate("/national-codes");
-    }, 800);
-  };
-
-  const handleReject = async () => {
-    if (currentMapping) {
-      await updateValidationStatus(
-        currentMapping.id,
-        "Rejected"
-      );
-    }
-
-    setStatus("Rejected");
-  };
-
+  // No material selected
   if (!sourceMaterial || !matchedMaterial) {
     return (
       <div className="validation-page">
         <div className="page-header">
           <div>
-            <h1>Material Validation</h1>
+            <h1>AI Harmonization Review</h1>
             <p>
-              Review and approve AI-generated material matching
-              recommendations.
+              Review AI-generated material harmonization recommendations.
             </p>
           </div>
         </div>
 
         <div className="validation-empty">
-          <h2>No material selected for validation</h2>
+          <h2>No harmonization recommendation selected</h2>
+
           <p>
-            Go to AI Matching and send an AI recommendation for validation.
+            Select a material and generate an AI harmonization
+            recommendation first.
           </p>
 
           <button
             className="go-ai-btn"
             onClick={() => navigate("/ai-matching")}
           >
-            Go to AI Matching
+            Go to AI Harmonization
           </button>
         </div>
       </div>
     );
   }
 
+  // AI-generated recommendation
+  const standardizedDescription =
+    "Stainless Steel Ball Valve, DN50 / 2 Inch";
+
+  const classification =
+    "Valves → Ball Valves → Stainless Steel";
+
+  const proposedNationalCode =
+    "NMC-VAL-SS-BALL-0001";
+
+  const riskLevel =
+    similarity >= 95
+      ? "Low"
+      : similarity >= 75
+      ? "Medium"
+      : "High";
+
+  const handleApprove = () => {
+    setStatus("Approved");
+
+    setTimeout(() => {
+      navigate("/national-codes", {
+        state: {
+          sourceMaterial,
+          matchedMaterial,
+          standardizedDescription,
+          classification,
+          proposedNationalCode,
+        },
+      });
+    }, 800);
+  };
+
+  const handleReject = () => {
+    setStatus("Rejected");
+  };
+
   return (
     <div className="validation-page">
+
+      {/* HEADER */}
+
       <div className="page-header">
         <div>
-          <h1>Material Validation</h1>
+          <h1>AI Harmonization Review</h1>
+
           <p>
-            Review the AI recommendation and approve or reject the proposed
-            material mapping.
+            Review the complete AI-generated harmonization recommendation.
           </p>
         </div>
 
-        <span className={`validation-status ${status.toLowerCase()}`}>
+        <span
+          className={`validation-status ${status.toLowerCase()}`}
+        >
           {status}
         </span>
       </div>
 
-      <div className="validation-comparison">
-        {/* SOURCE MATERIAL */}
 
-        <div className="validation-card">
-          <div className="card-label">SOURCE MATERIAL</div>
+      {/* HARMONIZATION CLUSTER */}
 
-          <h2>{sourceMaterial.description}</h2>
+      <div className="harmonization-cluster">
 
-          <div className="material-info">
-            <div>
-              <span>Material Code</span>
-              <strong>{sourceMaterial.code}</strong>
-            </div>
+        <div className="section-title">
+          Harmonization Cluster
+        </div>
 
-            <div>
-              <span>CPSE</span>
-              <strong>{sourceMaterial.cpse}</strong>
-            </div>
+        <div className="cluster-materials">
+
+          <div className="cluster-material">
+            <span className="cluster-tag">SOURCE</span>
+
+            <h3>{sourceMaterial.description}</h3>
+
+            <p>
+              {sourceMaterial.code} • {sourceMaterial.cpse}
+            </p>
           </div>
-        </div>
 
-        {/* AI MATCH */}
-
-        <div className="match-arrow">
-          AI
-          <br />
-          MATCH
-        </div>
-
-        <div className="validation-card matched-card">
-          <div className="card-label">AI RECOMMENDED MATCH</div>
-
-          <h2>{matchedMaterial.description}</h2>
-
-          <div className="material-info">
-            <div>
-              <span>Material Code</span>
-              <strong>{matchedMaterial.code}</strong>
-            </div>
-
-            <div>
-              <span>CPSE</span>
-              <strong>{matchedMaterial.cpse}</strong>
-            </div>
-
-            <div>
-              <span>AI Confidence</span>
-              <strong>
-                {location.state?.similarity ?? matchedMaterial.confidence ?? 0}%
-              </strong>
-            </div>
-
-            <div>
-              <span>Match Type</span>
-              <strong>
-                {location.state?.matchType ?? matchedMaterial.matchType}
-              </strong>
-            </div>
+          <div className="cluster-arrow">
+            AI
+            <br />
+            CLUSTER
           </div>
+
+          <div className="cluster-material">
+            <span className="cluster-tag">
+              RELATED MATERIAL
+            </span>
+
+            <h3>{matchedMaterial.description}</h3>
+
+            <p>
+              {matchedMaterial.code} • {matchedMaterial.cpse}
+            </p>
+          </div>
+
         </div>
+
       </div>
 
-      {/* AI REASONING */}
+
+      {/* AI RECOMMENDATION */}
+
+      <div className="harmonization-recommendation">
+
+        <div className="recommendation-header">
+          <div>
+            <h2>AI Harmonization Recommendation</h2>
+
+            <p>
+              Generated based on semantic similarity and material
+              attribute analysis.
+            </p>
+          </div>
+
+          <div className="recommendation-confidence">
+            {similarity}%
+            <span>AI Confidence</span>
+          </div>
+        </div>
+
+
+        <div className="recommendation-grid">
+
+          {/* STANDARD DESCRIPTION */}
+
+          <div className="recommendation-card">
+            <span>STANDARDIZED DESCRIPTION</span>
+
+            <h3>
+              {standardizedDescription}
+            </h3>
+          </div>
+
+
+          {/* TECHNICAL ATTRIBUTES */}
+
+          <div className="recommendation-card">
+            <span>EXTRACTED ATTRIBUTES</span>
+
+            <ul>
+              <li>Material: Stainless Steel</li>
+              <li>Type: Ball Valve</li>
+              <li>Size: DN50 / 2 Inch</li>
+            </ul>
+          </div>
+
+
+          {/* CLASSIFICATION */}
+
+          <div className="recommendation-card">
+            <span>RECOMMENDED CLASSIFICATION</span>
+
+            <h3>
+              {classification}
+            </h3>
+          </div>
+
+
+          {/* NATIONAL CODE */}
+
+          <div className="recommendation-card national-code-card">
+            <span>PROPOSED NATIONAL MATERIAL CODE</span>
+
+            <h2>
+              {proposedNationalCode}
+            </h2>
+
+            <p>
+              Generated for the harmonized material identity.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* CONFIDENCE & RISK */}
+
+      <div className="confidence-section">
+
+        <div>
+          <span>AI Match Confidence</span>
+
+          <strong>{similarity}%</strong>
+        </div>
+
+        <div>
+          <span>Match Type</span>
+
+          <strong>{matchType}</strong>
+        </div>
+
+        <div>
+          <span>Risk Level</span>
+
+          <strong>{riskLevel}</strong>
+        </div>
+
+      </div>
+
+
+      {/* AI EXPLANATION */}
 
       <div className="validation-reasons">
-        <h3>AI Matching Explanation</h3>
+
+        <h3>Why did AI generate this recommendation?</h3>
 
         <ul>
-          {matchedMaterial.reasons?.map((reason, index) => (
-            <li key={index}>{reason}</li>
-          )) || (
-            <>
-              <li>Material descriptions show strong semantic similarity.</li>
-              <li>Technical attributes indicate a potential equivalent material.</li>
-              <li>Cross-CPSE AI matching identified this recommendation.</li>
-            </>
-          )}
+          <li>
+            Material descriptions show strong semantic similarity.
+          </li>
+
+          <li>
+            Technical attributes indicate an equivalent material
+            configuration.
+          </li>
+
+          <li>
+            Cross-CPSE material records were grouped into a
+            harmonization cluster.
+          </li>
+
+          <li>
+            A standardized description and classification were
+            generated from the identified attributes.
+          </li>
         </ul>
+
       </div>
 
-      {/* ACTIONS */}
+
+      {/* HUMAN GOVERNANCE */}
 
       {status === "Pending" ? (
+
         <div className="validation-actions">
+
           <button
             className="approve-btn"
             onClick={handleApprove}
           >
-            ✓ Approve Mapping
+            ✓ Approve Harmonization
+          </button>
+
+          <button
+            className="details-btn"
+          >
+            ✎ Modify Recommendation
           </button>
 
           <button
             className="reject-btn"
             onClick={handleReject}
           >
-            ✕ Reject Mapping
+            ✕ Reject Recommendation
           </button>
+
         </div>
+
       ) : (
+
         <div className="validation-result">
-          <h3>Mapping {status}</h3>
+
+          <h3>
+            Harmonization {status}
+          </h3>
 
           <p>
-            The validation decision has been recorded for this material
-            recommendation.
+            The governance decision has been recorded for this
+            AI-generated harmonization recommendation.
           </p>
 
           <button
             className="go-ai-btn"
             onClick={() => navigate("/ai-matching")}
           >
-            Back to AI Matching
+            Back to AI Harmonization
           </button>
+
         </div>
+
       )}
+
     </div>
   );
 }

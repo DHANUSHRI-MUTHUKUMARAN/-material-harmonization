@@ -17,7 +17,7 @@ function AIMatching() {
     loadMatches();
   }, []);
 
-  // Extract unique source materials for the left panel
+  // Source materials available for analysis
   const materials = aiMatches.map((match) => ({
     id: match.id,
     code: match.sourceMaterial.code,
@@ -25,8 +25,8 @@ function AIMatching() {
     cpse: match.sourceMaterial.cpse,
   }));
 
-  // Get all matches for the selected source material
-  const selectedMatches = aiMatches.filter(
+  // Get the selected AI match record
+  const selectedMatch = aiMatches.find(
     (match) => match.id === selectedMaterial
   );
 
@@ -38,10 +38,11 @@ function AIMatching() {
     <div className="ai-matching">
       <div className="page-header">
         <div>
-          <h1>AI Material Matching</h1>
+          <h1>AI Material Harmonization</h1>
+
           <p>
-            Identify identical, duplicate, near-duplicate and functionally
-            equivalent materials across CPSEs.
+            Identify equivalent materials across CPSEs and generate an
+            AI-powered harmonization recommendation.
           </p>
         </div>
       </div>
@@ -54,7 +55,8 @@ function AIMatching() {
           <h2>Select a Material</h2>
 
           <p>
-            Choose a material to analyze potential matches.
+            Select a material to analyze similar and equivalent records
+            across CPSEs.
           </p>
 
           <div className="material-list">
@@ -81,109 +83,158 @@ function AIMatching() {
         {/* RIGHT PANEL */}
 
         <div className="matching-results">
+
           {!selectedMaterial ? (
+
             <div className="empty-state">
               <h2>Select a material</h2>
 
               <p>
-                Choose a material from the left to view AI-generated
-                similarity matches.
+                Choose a material to start AI-powered cross-CPSE
+                harmonization analysis.
               </p>
             </div>
+
           ) : (
+
             <>
               <div className="results-header">
+
                 <div>
-                  <h2>AI Match Recommendations</h2>
+                  <h2>Harmonization Cluster</h2>
 
                   <p>
-                    Potential equivalent materials identified across CPSEs.
+                    AI has identified related material records across
+                    participating CPSEs.
                   </p>
                 </div>
 
                 <span className="ai-status">
                   AI Analysis Complete
                 </span>
+
               </div>
+
+              {/* SOURCE MATERIAL */}
+
+              <div className="cluster-source-card">
+
+                <div className="cluster-label">
+                  SOURCE MATERIAL
+                </div>
+
+                <h3>
+                  {selectedSourceMaterial.description}
+                </h3>
+
+                <p>
+                  {selectedSourceMaterial.code} •{" "}
+                  {selectedSourceMaterial.cpse}
+                </p>
+
+              </div>
+
+              {/* MATCHED MATERIAL */}
 
               <div className="match-results-list">
 
-                {selectedMatches.map((match) => (
-                  <div className="ai-match-card" key={match.id}>
+                <div className="cluster-label">
+                  AI IDENTIFIED RELATED MATERIALS
+                </div>
+
+                {selectedMatch && (
+
+                  <div className="ai-match-card">
 
                     <div className="match-top">
+
                       <div>
                         <h3>
-                          {match.matchedMaterial.description}
+                          {selectedMatch.matchedMaterial.description}
                         </h3>
 
                         <p>
-                          {match.matchedMaterial.code} •{" "}
-                          {match.matchedMaterial.cpse}
+                          {selectedMatch.matchedMaterial.code} •{" "}
+                          {selectedMatch.matchedMaterial.cpse}
                         </p>
                       </div>
 
                       <div className="confidence-score">
-                        {match.similarity}%
+                        {selectedMatch.similarity}%
                       </div>
+
                     </div>
 
                     <div className="match-type">
-                      {match.matchType}
+                      {selectedMatch.matchType}
                     </div>
 
-                    <div className="match-reasons">
-                      <h4>AI Match Details</h4>
-
-                      <ul>
-                        <li>
-                          Similarity score calculated using material
-                          descriptions and specifications.
-                        </li>
-
-                        <li>
-                          Match classified as {match.matchType}.
-                        </li>
-
-                        <li>
-                          Cross-CPSE material comparison completed.
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="match-actions">
-
-                      <button
-                        className="review-btn"
-                        onClick={() =>
-                          navigate("/validation", {
-                            state: {
-                              sourceMaterial:
-                                selectedSourceMaterial,
-                              matchedMaterial:
-                                match.matchedMaterial,
-                              similarity:
-                                match.similarity,
-                              matchType:
-                                match.matchType,
-                            },
-                          })
-                        }
-                      >
-                        Send for Validation
-                      </button>
-
-                      <button className="details-btn">
-                        View Details
-                      </button>
-
-                    </div>
                   </div>
-                ))}
+
+                )}
 
               </div>
+
+              {/* CLUSTER SUMMARY */}
+
+              <div className="cluster-summary">
+
+                <div>
+                  <span>Cluster Size</span>
+                  <strong>
+                    {selectedMatch ? 2 : 1} Materials
+                  </strong>
+                </div>
+
+                <div>
+                  <span>AI Confidence</span>
+                  <strong>
+                    {selectedMatch?.similarity || 0}%
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Match Type</span>
+                  <strong>
+                    {selectedMatch?.matchType || "No Match"}
+                  </strong>
+                </div>
+
+              </div>
+
+              {/* MAIN ACTION */}
+
+              <div className="harmonization-action">
+
+                <button
+                  className="review-btn"
+                  onClick={() =>
+                    navigate("/validation", {
+                      state: {
+                        sourceMaterial: selectedSourceMaterial,
+                        matchedMaterial:
+                          selectedMatch?.matchedMaterial,
+                        similarity:
+                          selectedMatch?.similarity,
+                        matchType:
+                          selectedMatch?.matchType,
+                      },
+                    })
+                  }
+                >
+                  Generate Harmonization Recommendation →
+                </button>
+
+                <p>
+                  AI will generate a standardized description,
+                  classification, and proposed National Material Code.
+                </p>
+
+              </div>
+
             </>
           )}
+
         </div>
 
       </div>
