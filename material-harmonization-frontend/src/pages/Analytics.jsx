@@ -1,133 +1,349 @@
+import { useEffect, useState } from "react";
+
+import {
+  getMaterials,
+  getAIMatches,
+  getNationalCodes,
+} from "../services/materialService";
+
 function Analytics() {
+  const [materials, setMaterials] = useState([]);
+  const [aiMatches, setAiMatches] = useState([]);
+  const [nationalCodes, setNationalCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  /* LOAD ANALYTICS DATA */
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        setLoading(true);
+
+        const [
+          materialsData,
+          matchesData,
+          nationalCodesData,
+        ] = await Promise.all([
+          getMaterials(),
+          getAIMatches(),
+          getNationalCodes(),
+        ]);
+
+        setMaterials(materialsData);
+        setAiMatches(matchesData);
+        setNationalCodes(nationalCodesData);
+
+      } catch (error) {
+        console.error(
+          "Failed to load analytics data:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, []);
+
+
+  /* TOTAL APPROVED MAPPINGS */
+
+  const approvedMappings = nationalCodes.length;
+
+
+  /* UNIQUE CPSES */
+
+  const cpseNames = [
+    ...new Set(
+      materials.map((material) => material.cpse)
+    ),
+  ];
+
+
+  /* CPSE ANALYTICS */
+
+  const cpseData = cpseNames.map((cpse) => {
+    const cpseMaterials = materials.filter(
+      (material) => material.cpse === cpse
+    );
+
+    const cpseDuplicates = aiMatches.filter(
+      (match) =>
+        match.sourceMaterial.cpse === cpse ||
+        match.matchedMaterial.cpse === cpse
+    );
+
+    const cpseApproved = nationalCodes.filter(
+      (code) =>
+        code.sourceMaterial?.cpse === cpse ||
+        code.matchedMaterial?.cpse === cpse
+    );
+
+    return {
+      name: cpse,
+      materials: cpseMaterials.length,
+      duplicates: cpseDuplicates.length,
+      mappings: cpseApproved.length,
+    };
+  });
+
+
+  /* CATEGORY ANALYTICS */
+
+  const categoryNames = [
+    ...new Set(
+      materials.map((material) => material.category)
+    ),
+  ];
+
+
+  const categories = categoryNames.map((category) => {
+    const categoryMaterials = materials.filter(
+      (material) => material.category === category
+    );
+
+    const categoryMatches = aiMatches.filter((match) => {
+      const source = materials.find(
+        (material) =>
+          material.code === match.sourceMaterial.code
+      );
+
+      return source?.category === category;
+    });
+
+    const percentage =
+      categoryMaterials.length > 0
+        ? Math.round(
+            (categoryMatches.length /
+              categoryMaterials.length) *
+              100
+          )
+        : 0;
+
+    return {
+      name: category,
+      percentage:
+        percentage > 100 ? 100 : percentage,
+      matches: `${categoryMatches.length} Matches`,
+    };
+  });
+
+
+  /* DUPLICATE REDUCTION */
+
+  const duplicateReduction =
+    aiMatches.length > 0
+      ? Math.round(
+          (nationalCodes.length /
+            aiMatches.length) *
+            100
+        )
+      : 0;
+
+
+  /* CROSS-CPSE VISIBILITY */
+
+  const crossCPSEMatches = aiMatches.filter(
+    (match) =>
+      match.sourceMaterial.cpse !==
+      match.matchedMaterial.cpse
+  ).length;
+
+
+  const visibilityImprovement =
+    aiMatches.length > 0
+      ? Math.round(
+          (crossCPSEMatches /
+            aiMatches.length) *
+            100
+        )
+      : 0;
+
+
+  /* STATISTICS */
+
   const stats = [
     {
       title: "Total Materials",
-      value: "12,480",
-      description: "Across participating CPSEs",
+      value: materials.length,
+      description:
+        "Across participating CPSEs",
     },
+
     {
       title: "Duplicate Candidates",
-      value: "2,184",
-      description: "Potential duplicate materials detected",
+      value: aiMatches.length,
+      description:
+        "Potential duplicate materials detected",
     },
+
     {
       title: "AI Matches",
-      value: "1,856",
-      description: "High-confidence recommendations",
+      value: aiMatches.length,
+      description:
+        "AI-generated material match recommendations",
     },
+
     {
       title: "Approved Mappings",
-      value: "1,542",
-      description: "Validated by authorized users",
+      value: approvedMappings,
+      description:
+        "Approved harmonization mappings",
     },
+
     {
       title: "National Codes",
-      value: "486",
-      description: "Common material codes generated",
+      value: nationalCodes.length,
+      description:
+        "Common national material codes generated",
     },
   ];
 
-  const cpseData = [
-    {
-      name: "CPCL",
-      materials: "3,240",
-      duplicates: "482",
-      mappings: "356",
-    },
-    {
-      name: "ONGC",
-      materials: "3,780",
-      duplicates: "654",
-      mappings: "472",
-    },
-    {
-      name: "BHEL",
-      materials: "2,910",
-      duplicates: "528",
-      mappings: "389",
-    },
-    {
-      name: "SAIL",
-      materials: "2,550",
-      duplicates: "520",
-      mappings: "325",
-    },
-  ];
 
-  const categories = [
-    {
-      name: "Valves",
-      percentage: 82,
-      matches: "426 Matches",
-    },
-    {
-      name: "Electrical",
-      percentage: 76,
-      matches: "382 Matches",
-    },
-    {
-      name: "Fasteners",
-      percentage: 68,
-      matches: "295 Matches",
-    },
-    {
-      name: "Pumps",
-      percentage: 61,
-      matches: "218 Matches",
-    },
-  ];
+  /* LOADING STATE */
+
+  if (loading) {
+    return (
+      <div className="analytics-page">
+
+        <div className="validation-empty">
+
+          <h2>Loading Analytics...</h2>
+
+          <p>
+            Collecting material harmonization data and
+            generating analytics.
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
+
 
   return (
     <div className="analytics-page">
+
+      {/* PAGE HEADER */}
+
       <div className="page-header">
+
         <div>
-          <h1>Material Master Analytics</h1>
+
+          <h1>
+            Material Master Analytics
+          </h1>
 
           <p>
-            Monitor material duplication, AI recommendations, validation
-            progress and national code harmonization.
+            Monitor material duplication, AI recommendations,
+            validation progress and national code harmonization.
           </p>
+
         </div>
+
       </div>
+
 
       {/* STATISTICS CARDS */}
 
       <div className="analytics-stats">
+
         {stats.map((stat, index) => (
-          <div className="analytics-stat-card" key={index}>
-            <p>{stat.title}</p>
 
-            <h2>{stat.value}</h2>
+          <div
+            className="analytics-stat-card"
+            key={index}
+          >
 
-            <span>{stat.description}</span>
+            <p>
+              {stat.title}
+            </p>
+
+            <h2>
+              {stat.value}
+            </h2>
+
+            <span>
+              {stat.description}
+            </span>
+
           </div>
+
         ))}
+
       </div>
 
+
+      {/* ANALYTICS GRID */}
+
       <div className="analytics-grid">
+
+
         {/* CPSE OVERVIEW */}
 
         <div className="analytics-card">
+
           <div className="analytics-card-header">
+
             <div>
-              <h2>CPSE Material Overview</h2>
-              <p>Material harmonization progress by organization.</p>
+
+              <h2>
+                CPSE Material Overview
+              </h2>
+
+              <p>
+                Material harmonization progress by organization.
+              </p>
+
             </div>
+
           </div>
 
+
           <div className="analytics-table">
+
+
+            {/* TABLE HEADER */}
+
             <div className="analytics-table-header">
-              <span>CPSE</span>
-              <span>Materials</span>
-              <span>Duplicates</span>
-              <span>Approved</span>
+
+              <span>
+                CPSE
+              </span>
+
+              <span>
+                Materials
+              </span>
+
+              <span>
+                Duplicates
+              </span>
+
+              <span>
+                Approved
+              </span>
+
             </div>
 
-            {cpseData.map((cpse, index) => (
-              <div className="analytics-table-row" key={index}>
-                <strong>{cpse.name}</strong>
 
-                <span>{cpse.materials}</span>
+            {/* TABLE DATA */}
+
+            {cpseData.map((cpse, index) => (
+
+              <div
+                className="analytics-table-row"
+                key={index}
+              >
+
+                <strong>
+                  {cpse.name}
+                </strong>
+
+                <span>
+                  {cpse.materials}
+                </span>
 
                 <span className="duplicate-number">
                   {cpse.duplicates}
@@ -136,73 +352,171 @@ function Analytics() {
                 <span className="approved-number">
                   {cpse.mappings}
                 </span>
+
               </div>
+
             ))}
+
           </div>
+
         </div>
 
-        {/* AI MATCH RATE */}
+
+        {/* AI MATCHING BY CATEGORY */}
 
         <div className="analytics-card">
+
           <div className="analytics-card-header">
+
             <div>
-              <h2>AI Matching by Category</h2>
-              <p>High-confidence material matches.</p>
+
+              <h2>
+                AI Matching by Category
+              </h2>
+
+              <p>
+                Material match coverage across categories.
+              </p>
+
             </div>
+
           </div>
+
 
           <div className="category-analytics">
-            {categories.map((category, index) => (
-              <div className="category-row" key={index}>
-                <div className="category-info">
-                  <span>{category.name}</span>
 
-                  <span>{category.matches}</span>
+            {categories.length > 0 ? (
+
+              categories.map((category, index) => (
+
+                <div
+                  className="category-row"
+                  key={index}
+                >
+
+                  <div className="category-info">
+
+                    <span>
+                      {category.name}
+                    </span>
+
+                    <span>
+                      {category.matches}
+                    </span>
+
+                  </div>
+
+
+                  <div className="progress-track">
+
+                    <div
+                      className="progress-bar"
+                      style={{
+                        width: `${category.percentage}%`,
+                      }}
+                    ></div>
+
+                  </div>
+
+
+                  <strong>
+                    {category.percentage}%
+                  </strong>
+
                 </div>
 
-                <div className="progress-track">
-                  <div
-                    className="progress-bar"
-                    style={{
-                      width: `${category.percentage}%`,
-                    }}
-                  ></div>
-                </div>
+              ))
 
-                <strong>{category.percentage}%</strong>
-              </div>
-            ))}
+            ) : (
+
+              <p>
+                No category analytics available.
+              </p>
+
+            )}
+
           </div>
+
         </div>
+
       </div>
+
 
       {/* IMPACT SECTION */}
 
       <div className="impact-section">
-        <h2>Potential Impact</h2>
+
+        <h2>
+          Harmonization Impact
+        </h2>
+
 
         <div className="impact-grid">
-          <div className="impact-item">
-            <h3>↓ 17.5%</h3>
-            <p>Potential reduction in duplicate material records</p>
-          </div>
+
+
+          {/* DUPLICATE REDUCTION */}
 
           <div className="impact-item">
-            <h3>↑ 42%</h3>
-            <p>Improvement in cross-CPSE material visibility</p>
+
+            <h3>
+              ↓ {duplicateReduction}%
+            </h3>
+
+            <p>
+              Potential duplicate harmonization coverage
+            </p>
+
           </div>
 
-          <div className="impact-item">
-            <h3>486</h3>
-            <p>Common national material codes established</p>
-          </div>
+
+          {/* CROSS CPSE VISIBILITY */}
 
           <div className="impact-item">
-            <h3>4 CPSEs</h3>
-            <p>Currently participating in the unified framework</p>
+
+            <h3>
+              ↑ {visibilityImprovement}%
+            </h3>
+
+            <p>
+              Cross-CPSE material visibility
+            </p>
+
           </div>
+
+
+          {/* NATIONAL CODES */}
+
+          <div className="impact-item">
+
+            <h3>
+              {nationalCodes.length}
+            </h3>
+
+            <p>
+              Common national material codes established
+            </p>
+
+          </div>
+
+
+          {/* CPSES */}
+
+          <div className="impact-item">
+
+            <h3>
+              {cpseNames.length} CPSEs
+            </h3>
+
+            <p>
+              Currently participating in the unified framework
+            </p>
+
+          </div>
+
         </div>
+
       </div>
+
     </div>
   );
 }
