@@ -1,69 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAIMatches } from "../services/materialService";
 
 function AIMatching() {
+  const [aiMatches, setAiMatches] = useState([]);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
 
   const navigate = useNavigate();
 
-  const materials = [
-    {
-      id: 1,
-      code: "CPCL-VAL-1023",
-      description: "SS Ball Valve 2 Inch",
-      cpse: "CPCL",
-    },
-    {
-      id: 2,
-      code: "BHEL-CAB-890",
-      description: "Copper Cable 10 Sqmm",
-      cpse: "BHEL",
-    },
-  ];
+  useEffect(() => {
+    const loadMatches = async () => {
+      const data = await getAIMatches();
+      setAiMatches(data);
+    };
 
-  const matches = {
-    1: [
-      {
-        code: "ONGC-V-4567",
-        description: "Stainless Steel Ball Valve 50mm",
-        cpse: "ONGC",
-        confidence: 94,
-        matchType: "Near Duplicate",
-        reasons: [
-          "Same material type: Ball Valve",
-          "Same material: Stainless Steel",
-          "Equivalent size: 2 Inch ≈ 50 mm",
-        ],
-      },
-      {
-        code: "BHEL-V-245",
-        description: "SS Ball Valve DN50",
-        cpse: "BHEL",
-        confidence: 91,
-        matchType: "Functionally Equivalent",
-        reasons: [
-          "Same material type",
-          "Equivalent nominal size",
-          "Similar technical specification",
-        ],
-      },
-    ],
+    loadMatches();
+  }, []);
 
-    2: [
-      {
-        code: "ONGC-CAB-3321",
-        description: "Cu Electrical Cable 10mm²",
-        cpse: "ONGC",
-        confidence: 96,
-        matchType: "Near Duplicate",
-        reasons: [
-          "Copper and Cu represent the same material",
-          "Same cross-sectional area",
-          "Same electrical cable category",
-        ],
-      },
-    ],
-  };
+  // Extract unique source materials for the left panel
+  const materials = aiMatches.map((match) => ({
+    id: match.id,
+    code: match.sourceMaterial.code,
+    description: match.sourceMaterial.description,
+    cpse: match.sourceMaterial.cpse,
+  }));
+
+  // Get all matches for the selected source material
+  const selectedMatches = aiMatches.filter(
+    (match) => match.id === selectedMaterial
+  );
+
+  const selectedSourceMaterial = materials.find(
+    (material) => material.id === selectedMaterial
+  );
 
   return (
     <div className="ai-matching">
@@ -78,10 +47,15 @@ function AIMatching() {
       </div>
 
       <div className="matching-layout">
+
         {/* LEFT PANEL */}
+
         <div className="material-selection">
           <h2>Select a Material</h2>
-          <p>Choose a material to analyze potential matches.</p>
+
+          <p>
+            Choose a material to analyze potential matches.
+          </p>
 
           <div className="material-list">
             {materials.map((material) => (
@@ -93,6 +67,7 @@ function AIMatching() {
                 onClick={() => setSelectedMaterial(material.id)}
               >
                 <h3>{material.description}</h3>
+
                 <span>{material.code}</span>
 
                 <div className="material-cpse">
@@ -104,10 +79,12 @@ function AIMatching() {
         </div>
 
         {/* RIGHT PANEL */}
+
         <div className="matching-results">
           {!selectedMaterial ? (
             <div className="empty-state">
               <h2>Select a material</h2>
+
               <p>
                 Choose a material from the left to view AI-generated
                 similarity matches.
@@ -118,6 +95,7 @@ function AIMatching() {
               <div className="results-header">
                 <div>
                   <h2>AI Match Recommendations</h2>
+
                   <p>
                     Potential equivalent materials identified across CPSEs.
                   </p>
@@ -129,19 +107,24 @@ function AIMatching() {
               </div>
 
               <div className="match-results-list">
-                {matches[selectedMaterial]?.map((match, index) => (
-                  <div className="ai-match-card" key={index}>
+
+                {selectedMatches.map((match) => (
+                  <div className="ai-match-card" key={match.id}>
+
                     <div className="match-top">
                       <div>
-                        <h3>{match.description}</h3>
+                        <h3>
+                          {match.matchedMaterial.description}
+                        </h3>
 
                         <p>
-                          {match.code} • {match.cpse}
+                          {match.matchedMaterial.code} •{" "}
+                          {match.matchedMaterial.cpse}
                         </p>
                       </div>
 
                       <div className="confidence-score">
-                        {match.confidence}%
+                        {match.similarity}%
                       </div>
                     </div>
 
@@ -150,42 +133,59 @@ function AIMatching() {
                     </div>
 
                     <div className="match-reasons">
-                      <h4>Why did AI match this?</h4>
+                      <h4>AI Match Details</h4>
 
                       <ul>
-                        {match.reasons.map((reason, i) => (
-                          <li key={i}>{reason}</li>
-                        ))}
+                        <li>
+                          Similarity score calculated using material
+                          descriptions and specifications.
+                        </li>
+
+                        <li>
+                          Match classified as {match.matchType}.
+                        </li>
+
+                        <li>
+                          Cross-CPSE material comparison completed.
+                        </li>
                       </ul>
                     </div>
 
                     <div className="match-actions">
+
                       <button
                         className="review-btn"
                         onClick={() =>
-                            navigate("/validation", {
+                          navigate("/validation", {
                             state: {
-                                sourceMaterial: materials.find(
-                                (material) => material.id === selectedMaterial
-                                ),
-                                matchedMaterial: match,
+                              sourceMaterial:
+                                selectedSourceMaterial,
+                              matchedMaterial:
+                                match.matchedMaterial,
+                              similarity:
+                                match.similarity,
+                              matchType:
+                                match.matchType,
                             },
-                            })
+                          })
                         }
-                        >
+                      >
                         Send for Validation
-                        </button>
+                      </button>
 
                       <button className="details-btn">
                         View Details
                       </button>
+
                     </div>
                   </div>
                 ))}
+
               </div>
             </>
           )}
         </div>
+
       </div>
     </div>
   );

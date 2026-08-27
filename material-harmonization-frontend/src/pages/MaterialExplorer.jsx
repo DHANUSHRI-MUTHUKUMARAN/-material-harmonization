@@ -1,10 +1,21 @@
-import { useState } from "react";
-import materials from "../data/materials";
+import { useEffect, useState } from "react";
+import { getMaterials } from "../services/materialService";
+
 
 function MaterialExplorer() {
   const [search, setSearch] = useState("");
   const [cpseFilter, setCpseFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [materials, setMaterials] = useState([]);
+
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      const materialsData = await getMaterials();
+      setMaterials(materialsData);
+    };
+
+    fetchMaterials();
+  }, []);
 
   const filteredMaterials = materials.filter((material) => {
     const matchesSearch =

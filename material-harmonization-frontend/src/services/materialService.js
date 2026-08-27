@@ -1,0 +1,113 @@
+// Mock material data
+
+const materials = [
+  {
+    id: 1,
+    code: "CPCL-VAL-1023",
+    description: "SS Ball Valve 2 Inch",
+    cpse: "CPCL",
+    category: "Valve",
+    specification: "Stainless Steel, 2 Inch",
+  },
+  {
+    id: 2,
+    code: "ONGC-V-4567",
+    description: "Stainless Steel Ball Valve 50mm",
+    cpse: "ONGC",
+    category: "Valve",
+    specification: "SS, DN50",
+  },
+  {
+    id: 3,
+    code: "BHEL-V-245",
+    description: "SS Ball Valve DN50",
+    cpse: "BHEL",
+    category: "Valve",
+    specification: "Stainless Steel, DN50",
+  },
+  {
+    id: 4,
+    code: "BHEL-CAB-890",
+    description: "Copper Cable 10 Sqmm",
+    cpse: "BHEL",
+    category: "Electrical",
+    specification: "Copper, 10 Sqmm",
+  },
+  {
+    id: 5,
+    code: "ONGC-CAB-3321",
+    description: "Cu Electrical Cable 10mm²",
+    cpse: "ONGC",
+    category: "Electrical",
+    specification: "Copper, 10 Sqmm",
+  },
+];
+
+// Get all materials
+export const getMaterials = async () => {
+  return materials;
+};
+
+// Get one material by ID
+export const getMaterialById = async (id) => {
+  return materials.find(
+    (material) => material.id === Number(id)
+  );
+};
+// Mock AI matching data
+
+const aiMatches = [
+  {
+    id: 1,
+    sourceMaterial: {
+      code: "CPCL-VAL-1023",
+      description: "SS Ball Valve 2 Inch",
+      cpse: "CPCL",
+    },
+    matchedMaterial: {
+      code: "ONGC-V-4567",
+      description: "Stainless Steel Ball Valve 50mm",
+      cpse: "ONGC",
+    },
+    similarity: 96,
+    matchType: "Near Duplicate",
+    status: "Pending",
+  },
+  {
+    id: 2,
+    sourceMaterial: {
+      code: "BHEL-CAB-890",
+      description: "Copper Cable 10 Sqmm",
+      cpse: "BHEL",
+    },
+    matchedMaterial: {
+      code: "ONGC-CAB-3321",
+      description: "Cu Electrical Cable 10mm²",
+      cpse: "ONGC",
+    },
+    similarity: 94,
+    matchType: "Equivalent",
+    status: "Pending",
+  },
+  {
+    id: 3,
+    sourceMaterial: {
+      code: "BHEL-V-245",
+      description: "SS Ball Valve DN50",
+      cpse: "BHEL",
+    },
+    matchedMaterial: {
+      code: "CPCL-VAL-1023",
+      description: "SS Ball Valve 2 Inch",
+      cpse: "CPCL",
+    },
+    similarity: 91,
+    matchType: "Near Duplicate",
+    status: "Pending",
+  },
+];
+
+// Get AI-generated material matches
+export const getAIMatches = async () => {
+  return aiMatches;
+};
