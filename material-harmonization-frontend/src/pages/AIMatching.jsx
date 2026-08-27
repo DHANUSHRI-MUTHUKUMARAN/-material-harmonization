@@ -216,13 +216,11 @@ function AIMatching() {
                     onClick={() =>
                       navigate("/harmonization-recommendation", {
                         state: {
-                          sourceMaterial: selectedSourceMaterial,
-                          matchedMaterial:
-                            selectedMatch.matchedMaterial,
-                          similarity:
-                            selectedMatch.similarity,
-                          matchType:
-                            selectedMatch.matchType,
+                           sourceMaterial: selectedSourceMaterial,
+                            matchedMaterial: selectedMatch.matchedMaterial,
+                            similarity: selectedMatch.similarity,
+                            matchType: selectedMatch.matchType,
+                            matchId: selectedMatch.id,
                         },
                       })
                     }

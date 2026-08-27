@@ -149,3 +149,70 @@ export const updateValidationStatus = async (id, status) => {
 
   return mapping;
 };
+// AI Harmonization Recommendations
+
+const harmonizationRecommendations = {
+  1: {
+    standardizedDescription:
+      "Stainless Steel Ball Valve, DN50 / 2 Inch",
+
+    attributes: [
+      "Material: Stainless Steel",
+      "Type: Ball Valve",
+      "Size: DN50 / 2 Inch",
+    ],
+
+    classification:
+      "Valves → Ball Valves → Stainless Steel",
+
+    nationalCode:
+      "NMC-VAL-SS-BALL-0001",
+
+    riskLevel: "Low",
+  },
+
+  2: {
+    standardizedDescription:
+      "Copper Electrical Cable, 10 Sqmm",
+
+    attributes: [
+      "Material: Copper",
+      "Type: Electrical Cable",
+      "Size: 10 Sqmm",
+    ],
+
+    classification:
+      "Electrical → Cables → Copper",
+
+    nationalCode:
+      "NMC-ELE-CAB-CU-0002",
+
+    riskLevel: "Low",
+  },
+
+  3: {
+    standardizedDescription:
+      "Stainless Steel Ball Valve, DN50",
+
+    attributes: [
+      "Material: Stainless Steel",
+      "Type: Ball Valve",
+      "Size: DN50",
+    ],
+
+    classification:
+      "Valves → Ball Valves → Stainless Steel",
+
+    nationalCode:
+      "NMC-VAL-SS-BALL-0003",
+
+    riskLevel: "Medium",
+  },
+};
+
+
+// Get AI Harmonization Recommendation
+
+export const getHarmonizationRecommendation = async (id) => {
+  return harmonizationRecommendations[id];
+};

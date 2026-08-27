@@ -1,7 +1,35 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  getHarmonizationRecommendation,
+} from "../services/materialService";
 
 function HarmonizationRecommendation() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const {
+    sourceMaterial,
+    matchedMaterial,
+    similarity,
+    matchType,
+    matchId,
+  } = location.state || {};
+
+  const [recommendation, setRecommendation] = useState(null);
+
+  useEffect(() => {
+    const loadRecommendation = async () => {
+      if (matchId) {
+        const data =
+          await getHarmonizationRecommendation(matchId);
+
+        setRecommendation(data);
+      }
+    };
+
+    loadRecommendation();
+  }, [matchId]);
 
   const handleApprove = () => {
     alert("Harmonization recommendation approved!");
@@ -19,27 +47,78 @@ function HarmonizationRecommendation() {
     alert("Harmonization recommendation rejected.");
   };
 
-  return (
-    <div className="harmonization-page">
-      <div className="page-header">
-        <div>
-          <p className="cluster-label">Harmonization Cluster</p>
+  if (!sourceMaterial || !matchedMaterial) {
+    return (
+      <div className="harmonization-page">
+        <div className="validation-empty">
+          <h2>No harmonization data available</h2>
 
-          <h1>SS Ball Valve 2 Inch</h1>
+          <p>
+            Go to AI Matching and select a material to generate a
+            harmonization recommendation.
+          </p>
 
-          <p>CPCL-VAL-1023 • CPCL</p>
+          <button
+            className="go-ai-btn"
+            onClick={() => navigate("/ai-matching")}
+          >
+            Go to AI Matching
+          </button>
         </div>
       </div>
+    );
+  }
+
+  if (!recommendation) {
+    return (
+      <div className="harmonization-page">
+        <div className="validation-empty">
+          <h2>Generating AI Recommendation...</h2>
+
+          <p>
+            Analyzing material attributes and generating the harmonized
+            material identity.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="harmonization-page">
+
+      {/* MATERIAL CLUSTER */}
+
+      <div className="page-header">
+        <div>
+          <p className="cluster-label">
+            Harmonization Cluster
+          </p>
+
+          <h1>{sourceMaterial.description}</h1>
+
+          <p>
+            {sourceMaterial.code} • {sourceMaterial.cpse}
+          </p>
+        </div>
+      </div>
+
+      {/* RELATED MATERIAL */}
 
       <div className="related-material">
         <span>RELATED MATERIAL</span>
 
-        <h3>Stainless Steel Ball Valve 50mm</h3>
+        <h3>{matchedMaterial.description}</h3>
 
-        <p>ONGC-V-4567 • ONGC</p>
+        <p>
+          {matchedMaterial.code} • {matchedMaterial.cpse}
+        </p>
       </div>
 
+      {/* AI RECOMMENDATION */}
+
       <div className="harmonization-card">
+
         <div className="harmonization-header">
           <div>
             <h2>AI Harmonization Recommendation</h2>
@@ -51,80 +130,126 @@ function HarmonizationRecommendation() {
           </div>
 
           <div className="ai-confidence">
-            <strong>96%</strong>
+            <strong>{similarity}%</strong>
+
             <span>AI Confidence</span>
           </div>
         </div>
 
         <div className="recommendation-grid">
+
+          {/* STANDARDIZED DESCRIPTION */}
+
           <div className="recommendation-box">
             <span>STANDARDIZED DESCRIPTION</span>
 
             <strong>
-              Stainless Steel Ball Valve, DN50 / 2 Inch
+              {recommendation.standardizedDescription}
             </strong>
           </div>
+
+          {/* ATTRIBUTES */}
 
           <div className="recommendation-box">
             <span>EXTRACTED ATTRIBUTES</span>
 
             <ul>
-              <li>Material: Stainless Steel</li>
-              <li>Type: Ball Valve</li>
-              <li>Size: DN50 / 2 Inch</li>
+              {recommendation.attributes.map(
+                (attribute, index) => (
+                  <li key={index}>{attribute}</li>
+                )
+              )}
             </ul>
           </div>
+
+          {/* CLASSIFICATION */}
 
           <div className="recommendation-box">
             <span>RECOMMENDED CLASSIFICATION</span>
 
             <strong>
-              Valves → Ball Valves → Stainless Steel
+              {recommendation.classification}
             </strong>
           </div>
 
+          {/* NATIONAL CODE */}
+
           <div className="recommendation-box national-code">
-            <span>PROPOSED NATIONAL MATERIAL CODE</span>
+            <span>
+              PROPOSED NATIONAL MATERIAL CODE
+            </span>
 
-            <strong>NMC-VAL-SS-BALL-0001</strong>
+            <strong>
+              {recommendation.nationalCode}
+            </strong>
 
-            <p>Generated for the harmonized material identity.</p>
+            <p>
+              Generated for the harmonized material identity.
+            </p>
           </div>
+
         </div>
       </div>
 
+      {/* METRICS */}
+
       <div className="recommendation-metrics">
+
         <div className="metric-box">
           <span>AI Match Confidence</span>
-          <strong>96%</strong>
+
+          <strong>{similarity}%</strong>
         </div>
 
         <div className="metric-box">
           <span>Match Type</span>
-          <strong>Near Duplicate</strong>
+
+          <strong>{matchType}</strong>
         </div>
 
         <div className="metric-box">
           <span>Risk Level</span>
-          <strong>Low</strong>
+
+          <strong>
+            {recommendation.riskLevel}
+          </strong>
         </div>
+
       </div>
 
+      {/* AI EXPLANATION */}
+
       <div className="ai-explanation">
-        <h3>Why did AI generate this recommendation?</h3>
+        <h3>
+          Why did AI generate this recommendation?
+        </h3>
 
         <ul>
-          <li>Material descriptions show strong semantic similarity.</li>
-          <li>Technical attributes indicate an equivalent material configuration.</li>
-          <li>Cross-CPSE material records were grouped into a harmonization cluster.</li>
           <li>
-            A standardized description and classification were generated from
-            the identified attributes.
+            Material descriptions show strong semantic similarity.
+          </li>
+
+          <li>
+            Technical attributes indicate an equivalent material
+            configuration.
+          </li>
+
+          <li>
+            Cross-CPSE material records were grouped into a
+            harmonization cluster.
+          </li>
+
+          <li>
+            A standardized description and classification were generated
+            from the identified attributes.
           </li>
         </ul>
       </div>
 
+      {/* ACTIONS */}
+
       <div className="harmonization-actions">
+
         <button
           className="approve-harmonization-btn"
           onClick={handleApprove}
@@ -145,7 +270,9 @@ function HarmonizationRecommendation() {
         >
           ✕ Reject Recommendation
         </button>
+
       </div>
+
     </div>
   );
 }
