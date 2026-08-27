@@ -1,4 +1,6 @@
-// Mock material data
+// ============================================
+// MATERIAL DATA
+// ============================================
 
 const materials = [
   {
@@ -43,10 +45,16 @@ const materials = [
   },
 ];
 
+
+// ============================================
+// MATERIAL SERVICE FUNCTIONS
+// ============================================
+
 // Get all materials
 export const getMaterials = async () => {
   return materials;
 };
+
 
 // Get one material by ID
 export const getMaterialById = async (id) => {
@@ -54,91 +62,127 @@ export const getMaterialById = async (id) => {
     (material) => material.id === Number(id)
   );
 };
-// Mock AI matching data
+
+
+// ============================================
+// AI MATCHING DATA
+// ============================================
 
 const aiMatches = [
   {
     id: 1,
+
     sourceMaterial: {
       code: "CPCL-VAL-1023",
       description: "SS Ball Valve 2 Inch",
       cpse: "CPCL",
     },
+
     matchedMaterial: {
       code: "ONGC-V-4567",
       description: "Stainless Steel Ball Valve 50mm",
       cpse: "ONGC",
     },
+
     similarity: 96,
     matchType: "Near Duplicate",
     status: "Pending",
   },
+
   {
     id: 2,
+
     sourceMaterial: {
       code: "BHEL-CAB-890",
       description: "Copper Cable 10 Sqmm",
       cpse: "BHEL",
     },
+
     matchedMaterial: {
       code: "ONGC-CAB-3321",
       description: "Cu Electrical Cable 10mm²",
       cpse: "ONGC",
     },
+
     similarity: 94,
     matchType: "Equivalent",
     status: "Pending",
   },
+
   {
     id: 3,
+
     sourceMaterial: {
       code: "BHEL-V-245",
       description: "SS Ball Valve DN50",
       cpse: "BHEL",
     },
+
     matchedMaterial: {
       code: "CPCL-VAL-1023",
       description: "SS Ball Valve 2 Inch",
       cpse: "CPCL",
     },
+
     similarity: 91,
     matchType: "Near Duplicate",
     status: "Pending",
   },
 ];
-// connecting the AI matching data to the service fn
-// get AI-generated material matches
+
+
+// Get AI-generated material matches
 export const getAIMatches = async () => {
   return aiMatches;
 };
-// Mock validation data
+
+
+// Get one AI match by ID
+export const getAIMatchById = async (id) => {
+  return aiMatches.find(
+    (match) => match.id === Number(id)
+  );
+};
+
+
+// ============================================
+// VALIDATION DATA
+// ============================================
 
 const validationMappings = [
   {
     id: 1,
+
     sourceMaterial: {
       code: "CPCL-VAL-1023",
       description: "SS Ball Valve 2 Inch",
       cpse: "CPCL",
     },
+
     matchedMaterial: {
       code: "ONGC-V-4567",
       description: "Stainless Steel Ball Valve 50mm",
       cpse: "ONGC",
     },
+
     similarity: 96,
     matchType: "Near Duplicate",
     status: "Pending",
   },
 ];
+
 
 // Get validation mappings
 export const getValidationMappings = async () => {
   return validationMappings;
 };
 
+
 // Update validation status
-export const updateValidationStatus = async (id, status) => {
+export const updateValidationStatus = async (
+  id,
+  status
+) => {
   const mapping = validationMappings.find(
     (item) => item.id === Number(id)
   );
@@ -149,7 +193,11 @@ export const updateValidationStatus = async (id, status) => {
 
   return mapping;
 };
-// AI Harmonization Recommendations
+
+
+// ============================================
+// AI HARMONIZATION RECOMMENDATIONS
+// ============================================
 
 const harmonizationRecommendations = {
   1: {
@@ -212,7 +260,8 @@ const harmonizationRecommendations = {
 
 
 // Get AI Harmonization Recommendation
-
-export const getHarmonizationRecommendation = async (id) => {
-  return harmonizationRecommendations[id];
+export const getHarmonizationRecommendation = async (
+  id
+) => {
+  return harmonizationRecommendations[Number(id)];
 };
