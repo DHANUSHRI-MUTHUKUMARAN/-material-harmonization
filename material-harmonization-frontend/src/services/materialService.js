@@ -327,7 +327,13 @@ export const getNationalCodes = async () => {
 // AUDIT TRAIL
 // ============================================
 
-const auditLogs = [
+// Load saved audit logs from localStorage
+
+const savedAuditLogs = JSON.parse(
+  localStorage.getItem("auditLogs")
+);
+
+const auditLogs = savedAuditLogs || [
   {
     id: 1,
 
@@ -373,7 +379,18 @@ export const addAuditLog = async ({
   };
 
 
+  // Add newest log at the top
+
   auditLogs.unshift(newLog);
+
+
+  // Save logs permanently in browser storage
+
+  localStorage.setItem(
+    "auditLogs",
+    JSON.stringify(auditLogs)
+  );
+
 
   return newLog;
 };
