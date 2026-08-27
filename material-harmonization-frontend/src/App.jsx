@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HarmonizationRecommendation from "./pages/HarmonizationRecommendation";
 
 import Sidebar from "./components/Sidebar";
 
 import Dashboard from "./pages/Dashboard";
 import MaterialExplorer from "./pages/MaterialExplorer";
 import AIMatching from "./pages/AIMatching";
+import HarmonizationRecommendation from "./pages/HarmonizationRecommendation";
 import Validation from "./pages/Validation";
+import NationalCodeApproval from "./pages/NationalCodeApproval";
 import NationalCodes from "./pages/NationalCodes";
 import Analytics from "./pages/Analytics";
 import AuditTrail from "./pages/AuditTrail";
@@ -14,12 +15,19 @@ import AuditTrail from "./pages/AuditTrail";
 function App() {
   return (
     <BrowserRouter>
+
       <div className="app-layout">
+
         <Sidebar />
 
         <main className="main-content">
+
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+
+            <Route
+              path="/"
+              element={<Dashboard />}
+            />
 
             <Route
               path="/materials"
@@ -32,13 +40,18 @@ function App() {
             />
 
             <Route
+              path="/harmonization-recommendation"
+              element={<HarmonizationRecommendation />}
+            />
+
+            <Route
               path="/validation"
               element={<Validation />}
             />
 
             <Route
-              path="/harmonization-recommendation"
-              element={<HarmonizationRecommendation />}
+              path="/national-code-approval"
+              element={<NationalCodeApproval />}
             />
 
             <Route
@@ -55,9 +68,13 @@ function App() {
               path="/audit-trail"
               element={<AuditTrail />}
             />
+
           </Routes>
+
         </main>
+
       </div>
+
     </BrowserRouter>
   );
 }

@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import { useEffect, useState } from "react";
 import {
   getHarmonizationRecommendation,
   approveHarmonization,
-  addAuditLog,
 } from "../services/materialService";
 
 function Validation() {
@@ -17,56 +15,42 @@ function Validation() {
     similarity = 0,
     matchType = "Potential Match",
     matchId,
+    recommendation: passedRecommendation,
   } = location.state || {};
 
   const [status, setStatus] = useState("Pending");
-
-  const [recommendation, setRecommendation] = useState(null);
+  const [recommendation, setRecommendation] =
+    useState(passedRecommendation || null);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [editedRecommendation, setEditedRecommendation] =
-    useState(null);
-
-  /* ============================================
-     LOAD AI RECOMMENDATION
-  ============================================ */
-
   useEffect(() => {
     const loadRecommendation = async () => {
+      if (recommendation) {
+        return;
+      }
+
       try {
         if (matchId) {
           const data =
             await getHarmonizationRecommendation(matchId);
 
           setRecommendation(data);
-
-          setEditedRecommendation({
-            ...data,
-            attributes: [...data.attributes],
-          });
         }
       } catch (error) {
         console.error(
-          "Failed to load harmonization recommendation:",
+          "Failed to load recommendation:",
           error
         );
       }
     };
 
     loadRecommendation();
-  }, [matchId]);
-
-
-  /* ============================================
-     APPROVE HARMONIZATION
-  ============================================ */
+  }, [matchId, recommendation]);
 
   const handleApprove = async () => {
     if (
-      !editedRecommendation ||
+      !recommendation ||
       !sourceMaterial ||
       !matchedMaterial
     ) {
@@ -80,16 +64,14 @@ function Validation() {
       await approveHarmonization(
         sourceMaterial,
         matchedMaterial,
-        editedRecommendation
+        recommendation
       );
 
       setStatus("Approved");
 
-      alert(
-        "Harmonization approved successfully. National Material Code has been created or reused for this material."
-      );
-
-      navigate("/national-codes");
+      setTimeout(() => {
+        navigate("/national-codes");
+      }, 700);
 
     } catch (error) {
       console.error(
@@ -106,126 +88,15 @@ function Validation() {
     }
   };
 
-
-  /* ============================================
-     MODIFY RECOMMENDATION
-  ============================================ */
-
-  const handleModify = () => {
-    setIsEditing(true);
-  };
-
-
-  /* ============================================
-     SAVE MODIFIED RECOMMENDATION
-  ============================================ */
-
-  const handleSaveModification = () => {
-    if (!editedRecommendation) {
-      return;
-    }
-
-    setRecommendation({
-      ...editedRecommendation,
-    });
-
-    setIsEditing(false);
-
-    alert(
-      "Modified harmonization recommendation saved successfully."
-    );
-  };
-
-
-  /* ============================================
-     CANCEL MODIFICATION
-  ============================================ */
-
-  const handleCancelModification = () => {
-    setEditedRecommendation({
-      ...recommendation,
-      attributes: [...recommendation.attributes],
-    });
-
-    setIsEditing(false);
-  };
-
-
-  /* ============================================
-     UPDATE ATTRIBUTE
-  ============================================ */
-
-  const handleAttributeChange = (index, value) => {
-    const updatedAttributes = [
-      ...editedRecommendation.attributes,
-    ];
-
-    updatedAttributes[index] = value;
-
-    setEditedRecommendation({
-      ...editedRecommendation,
-      attributes: updatedAttributes,
-    });
-  };
-
-
-  /* ============================================
-     REJECT HARMONIZATION
-  ============================================ */
-
-  const handleReject = async () => {
+  const handleReject = () => {
     const confirmed = window.confirm(
       "Are you sure you want to reject this harmonization recommendation?"
     );
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-
-      await addAuditLog({
-        action: "Harmonization Rejected",
-
-        material:
-          recommendation.standardizedDescription,
-
-        materialCode:
-          recommendation.nationalCode,
-
-        user:
-          "Material Validation Officer",
-
-        status:
-          "Rejected",
-      });
-
+    if (confirmed) {
       setStatus("Rejected");
-
-      alert(
-        "Harmonization recommendation rejected successfully."
-      );
-
-    } catch (error) {
-      console.error(
-        "Failed to reject harmonization:",
-        error
-      );
-
-      alert(
-        "Something went wrong while rejecting the harmonization."
-      );
-
-    } finally {
-      setIsProcessing(false);
     }
   };
-
-
-  /* ============================================
-     NO DATA
-  ============================================ */
 
   if (
     !sourceMaterial ||
@@ -240,8 +111,7 @@ function Validation() {
             <h1>AI Harmonization Review</h1>
 
             <p>
-              Review AI-generated material harmonization
-              recommendations.
+              Review AI-generated material harmonization recommendations.
             </p>
           </div>
         </div>
@@ -253,7 +123,7 @@ function Validation() {
           </h2>
 
           <p>
-            Select a material and generate an AI harmonization
+            Select a material and generate a harmonization
             recommendation first.
           </p>
 
@@ -270,12 +140,7 @@ function Validation() {
     );
   }
 
-
-  /* ============================================
-     LOADING
-  ============================================ */
-
-  if (!recommendation || !editedRecommendation) {
+  if (!recommendation) {
     return (
       <div className="validation-page">
 
@@ -286,8 +151,7 @@ function Validation() {
           </h2>
 
           <p>
-            Retrieving the harmonization recommendation and
-            material attributes.
+            Retrieving the harmonization recommendation.
           </p>
 
         </div>
@@ -296,17 +160,13 @@ function Validation() {
     );
   }
 
-
-  /* ============================================
-     MAIN UI
-  ============================================ */
+  const interventionText =
+    similarity >= 85
+      ? "Partial Human Review"
+      : "Full Human Validation";
 
   return (
     <div className="validation-page">
-
-      {/* ========================================
-          HEADER
-      ======================================== */}
 
       <div className="page-header">
 
@@ -317,8 +177,8 @@ function Validation() {
           </h1>
 
           <p>
-            Review the complete AI-generated harmonization
-            recommendation before approval.
+            {interventionText} is required before issuing the
+            National Material Code.
           </p>
 
         </div>
@@ -331,11 +191,6 @@ function Validation() {
 
       </div>
 
-
-      {/* ========================================
-          HARMONIZATION CLUSTER
-      ======================================== */}
-
       <div className="harmonization-cluster">
 
         <div className="section-title">
@@ -343,8 +198,6 @@ function Validation() {
         </div>
 
         <div className="cluster-materials">
-
-          {/* SOURCE MATERIAL */}
 
           <div className="cluster-material">
 
@@ -362,21 +215,11 @@ function Validation() {
 
           </div>
 
-
-          {/* AI CLUSTER */}
-
           <div className="cluster-arrow">
-
             AI
-
             <br />
-
             CLUSTER
-
           </div>
-
-
-          {/* RELATED MATERIAL */}
 
           <div className="cluster-material">
 
@@ -398,11 +241,6 @@ function Validation() {
 
       </div>
 
-
-      {/* ========================================
-          AI RECOMMENDATION
-      ======================================== */}
-
       <div className="harmonization-recommendation">
 
         <div className="recommendation-header">
@@ -414,12 +252,10 @@ function Validation() {
             </h2>
 
             <p>
-              Generated based on semantic similarity and
-              material attribute analysis.
+              Review the AI-generated standardized material identity.
             </p>
 
           </div>
-
 
           <div className="recommendation-confidence">
 
@@ -433,11 +269,7 @@ function Validation() {
 
         </div>
 
-
         <div className="recommendation-grid">
-
-
-          {/* STANDARDIZED DESCRIPTION */}
 
           <div className="recommendation-card">
 
@@ -445,34 +277,11 @@ function Validation() {
               STANDARDIZED DESCRIPTION
             </span>
 
-            {isEditing ? (
-
-              <input
-                type="text"
-                value={
-                  editedRecommendation.standardizedDescription
-                }
-                onChange={(event) =>
-                  setEditedRecommendation({
-                    ...editedRecommendation,
-                    standardizedDescription:
-                      event.target.value,
-                  })
-                }
-              />
-
-            ) : (
-
-              <h3>
-                {recommendation.standardizedDescription}
-              </h3>
-
-            )}
+            <h3>
+              {recommendation.standardizedDescription}
+            </h3>
 
           </div>
-
-
-          {/* EXTRACTED ATTRIBUTES */}
 
           <div className="recommendation-card">
 
@@ -480,52 +289,17 @@ function Validation() {
               EXTRACTED ATTRIBUTES
             </span>
 
-            {isEditing ? (
-
-              <div>
-
-                {editedRecommendation.attributes.map(
-                  (attribute, index) => (
-
-                    <input
-                      key={index}
-                      type="text"
-                      value={attribute}
-                      onChange={(event) =>
-                        handleAttributeChange(
-                          index,
-                          event.target.value
-                        )
-                      }
-                    />
-
-                  )
-                )}
-
-              </div>
-
-            ) : (
-
-              <ul>
-
-                {recommendation.attributes.map(
-                  (attribute, index) => (
-
-                    <li key={index}>
-                      {attribute}
-                    </li>
-
-                  )
-                )}
-
-              </ul>
-
-            )}
+            <ul>
+              {recommendation.attributes.map(
+                (attribute, index) => (
+                  <li key={index}>
+                    {attribute}
+                  </li>
+                )
+              )}
+            </ul>
 
           </div>
-
-
-          {/* CLASSIFICATION */}
 
           <div className="recommendation-card">
 
@@ -533,34 +307,11 @@ function Validation() {
               RECOMMENDED CLASSIFICATION
             </span>
 
-            {isEditing ? (
-
-              <input
-                type="text"
-                value={
-                  editedRecommendation.classification
-                }
-                onChange={(event) =>
-                  setEditedRecommendation({
-                    ...editedRecommendation,
-                    classification:
-                      event.target.value,
-                  })
-                }
-              />
-
-            ) : (
-
-              <h3>
-                {recommendation.classification}
-              </h3>
-
-            )}
+            <h3>
+              {recommendation.classification}
+            </h3>
 
           </div>
-
-
-          {/* NATIONAL MATERIAL CODE */}
 
           <div className="recommendation-card national-code-card">
 
@@ -569,12 +320,8 @@ function Validation() {
             </span>
 
             <h2>
-              {editedRecommendation.nationalCode}
+              {recommendation.nationalCode}
             </h2>
-
-            <p>
-              Generated for the harmonized material identity.
-            </p>
 
           </div>
 
@@ -582,176 +329,65 @@ function Validation() {
 
       </div>
 
-
-      {/* ========================================
-          CONFIDENCE AND RISK
-      ======================================== */}
-
       <div className="confidence-section">
 
         <div>
-
-          <span>
-            AI Match Confidence
-          </span>
+          <span>AI Match Confidence</span>
 
           <strong>
             {similarity}%
           </strong>
-
         </div>
 
-
         <div>
-
-          <span>
-            Match Type
-          </span>
+          <span>Match Type</span>
 
           <strong>
             {matchType}
           </strong>
-
         </div>
-
 
         <div>
-
-          <span>
-            Risk Level
-          </span>
+          <span>Required Intervention</span>
 
           <strong>
-            {editedRecommendation.riskLevel}
+            {interventionText}
           </strong>
-
         </div>
 
       </div>
 
-
-      {/* ========================================
-          AI EXPLANATION
-      ======================================== */}
-
-      <div className="validation-reasons">
-
-        <h3>
-          Why did AI generate this recommendation?
-        </h3>
-
-        <ul>
-
-          <li>
-            Material descriptions show strong semantic similarity.
-          </li>
-
-          <li>
-            Technical attributes indicate an equivalent
-            material configuration.
-          </li>
-
-          <li>
-            Cross-CPSE material records were grouped into
-            a harmonization cluster.
-          </li>
-
-          <li>
-            A standardized description and classification
-            were generated from the identified attributes.
-          </li>
-
-        </ul>
-
-      </div>
-
-
-      {/* ========================================
-          HUMAN GOVERNANCE ACTIONS
-      ======================================== */}
-
-      {status === "Pending" && (
+      {status === "Pending" ? (
 
         <div className="validation-actions">
 
-          {!isEditing ? (
+          <button
+            className="approve-btn"
+            onClick={handleApprove}
+            disabled={isProcessing}
+          >
+            {isProcessing
+              ? "Approving..."
+              : "✓ Approve Harmonization"}
+          </button>
 
-            <>
-
-              <button
-                className="approve-btn"
-                onClick={handleApprove}
-                disabled={isProcessing}
-              >
-                {isProcessing
-                  ? "Approving..."
-                  : "✓ Approve Harmonization"}
-              </button>
-
-
-              <button
-                className="details-btn"
-                onClick={handleModify}
-                disabled={isProcessing}
-              >
-                ✎ Modify Recommendation
-              </button>
-
-
-              <button
-                className="reject-btn"
-                onClick={handleReject}
-                disabled={isProcessing}
-              >
-                ✕ Reject Recommendation
-              </button>
-
-            </>
-
-          ) : (
-
-            <>
-
-              <button
-                className="approve-btn"
-                onClick={handleSaveModification}
-              >
-                ✓ Save Changes
-              </button>
-
-
-              <button
-                className="reject-btn"
-                onClick={handleCancelModification}
-              >
-                Cancel
-              </button>
-
-            </>
-
-          )}
+          <button
+            className="reject-btn"
+            onClick={handleReject}
+            disabled={isProcessing}
+          >
+            ✕ Reject Recommendation
+          </button>
 
         </div>
 
-      )}
-
-
-      {/* ========================================
-          RESULT AFTER REJECTION
-      ======================================== */}
-
-      {status === "Rejected" && (
+      ) : (
 
         <div className="validation-result">
 
           <h3>
-            Harmonization Rejected
+            Harmonization {status}
           </h3>
-
-          <p>
-            The governance decision has been recorded for
-            this AI-generated harmonization recommendation.
-          </p>
 
           <button
             className="go-ai-btn"

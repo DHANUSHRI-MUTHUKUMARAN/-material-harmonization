@@ -45,15 +45,9 @@ const materials = [
   },
 ];
 
-
-// ============================================
-// MATERIAL SERVICE FUNCTIONS
-// ============================================
-
 export const getMaterials = async () => {
   return materials;
 };
-
 
 export const getMaterialById = async (id) => {
   return materials.find(
@@ -128,11 +122,9 @@ const aiMatches = [
   },
 ];
 
-
 export const getAIMatches = async () => {
   return aiMatches;
 };
-
 
 export const getAIMatchById = async (id) => {
   return aiMatches.find(
@@ -142,55 +134,7 @@ export const getAIMatchById = async (id) => {
 
 
 // ============================================
-// VALIDATION DATA
-// ============================================
-
-const validationMappings = [
-  {
-    id: 1,
-
-    sourceMaterial: {
-      code: "CPCL-VAL-1023",
-      description: "SS Ball Valve 2 Inch",
-      cpse: "CPCL",
-    },
-
-    matchedMaterial: {
-      code: "ONGC-V-4567",
-      description: "Stainless Steel Ball Valve 50mm",
-      cpse: "ONGC",
-    },
-
-    similarity: 96,
-    matchType: "Near Duplicate",
-    status: "Pending",
-  },
-];
-
-
-export const getValidationMappings = async () => {
-  return validationMappings;
-};
-
-
-export const updateValidationStatus = async (
-  id,
-  status
-) => {
-  const mapping = validationMappings.find(
-    (item) => item.id === Number(id)
-  );
-
-  if (mapping) {
-    mapping.status = status;
-  }
-
-  return mapping;
-};
-
-
-// ============================================
-// AI HARMONIZATION RECOMMENDATIONS
+// HARMONIZATION RECOMMENDATIONS
 // ============================================
 
 const harmonizationRecommendations = {
@@ -229,30 +173,28 @@ const harmonizationRecommendations = {
     nationalCode:
       "NMC-ELE-CAB-CU-0002",
 
-    riskLevel: "Low",
+    riskLevel: "Medium",
   },
 
   3: {
     standardizedDescription:
-      "Stainless Steel Ball Valve, DN50",
+      "Stainless Steel Ball Valve, DN50 / 2 Inch",
 
     attributes: [
       "Material: Stainless Steel",
       "Type: Ball Valve",
-      "Size: DN50",
+      "Size: DN50 / 2 Inch",
     ],
 
     classification:
       "Valves → Ball Valves → Stainless Steel",
 
-    // Same harmonized material family
     nationalCode:
       "NMC-VAL-SS-BALL-0001",
 
     riskLevel: "Medium",
   },
 };
-
 
 export const getHarmonizationRecommendation = async (
   id
@@ -262,7 +204,7 @@ export const getHarmonizationRecommendation = async (
 
 
 // ============================================
-// SAFE LOCAL STORAGE HELPER
+// LOCAL STORAGE HELPER
 // ============================================
 
 const getStoredData = (key, defaultValue) => {
@@ -276,9 +218,8 @@ const getStoredData = (key, defaultValue) => {
     return JSON.parse(storedData);
 
   } catch (error) {
-
     console.error(
-      `Failed to load ${key} from localStorage:`,
+      `Failed to load ${key}:`,
       error
     );
 
@@ -296,25 +237,6 @@ const nationalCodes = getStoredData(
   []
 );
 
-
-// ============================================
-// CHECK IF MATERIAL ALREADY EXISTS
-// ============================================
-
-const materialExists = (
-  mappedMaterials,
-  material
-) => {
-  return mappedMaterials.some(
-    (item) => item.code === material.code
-  );
-};
-
-
-// ============================================
-// APPROVE HARMONIZATION
-// ============================================
-
 export const approveHarmonization = async (
   sourceMaterial,
   matchedMaterial,
@@ -331,112 +253,51 @@ export const approveHarmonization = async (
     );
   }
 
-
-  // ============================================
-  // CHECK IF NATIONAL CODE ALREADY EXISTS
-  // ============================================
-
   const existingCode = nationalCodes.find(
     (item) =>
       item.code === recommendation.nationalCode
   );
 
-
-  // ============================================
-  // IF CODE EXISTS → ADD NEW MATERIALS
-  // ============================================
-
   if (existingCode) {
 
-    // Ensure mappedMaterials exists
-    if (!existingCode.mappedMaterials) {
+    const existingMaterials =
+      existingCode.mappedMaterials || [];
 
-      existingCode.mappedMaterials = [];
-
-      // Migrate old data structure if needed
-
-      if (existingCode.sourceMaterial) {
-        existingCode.mappedMaterials.push(
-          existingCode.sourceMaterial
-        );
-      }
-
-      if (existingCode.matchedMaterial) {
-        existingCode.mappedMaterials.push(
-          existingCode.matchedMaterial
-        );
-      }
-    }
-
-
-    // Add source material if not already mapped
-
-    if (
-      !materialExists(
-        existingCode.mappedMaterials,
-        sourceMaterial
-      )
-    ) {
-      existingCode.mappedMaterials.push(
-        sourceMaterial
+    const sourceExists =
+      existingMaterials.some(
+        (material) =>
+          material.code === sourceMaterial.code
       );
-    }
 
-
-    // Add matched material if not already mapped
-
-    if (
-      !materialExists(
-        existingCode.mappedMaterials,
-        matchedMaterial
-      )
-    ) {
-      existingCode.mappedMaterials.push(
-        matchedMaterial
+    const matchedExists =
+      existingMaterials.some(
+        (material) =>
+          material.code === matchedMaterial.code
       );
+
+    if (!sourceExists) {
+      existingMaterials.push(sourceMaterial);
     }
 
+    if (!matchedExists) {
+      existingMaterials.push(matchedMaterial);
+    }
 
-    // Save updated National Codes
+    existingCode.mappedMaterials =
+      existingMaterials;
 
     localStorage.setItem(
       "nationalCodes",
       JSON.stringify(nationalCodes)
     );
 
-
-    // Add audit log
-
-    await addAuditLog({
-      action: "Material Added to National Code",
-
-      material:
-        recommendation.standardizedDescription,
-
-      materialCode:
-        recommendation.nationalCode,
-
-      user:
-        "Material Validation Officer",
-
-      status:
-        "Approved",
-    });
-
-
     return existingCode;
   }
-
-
-  // ============================================
-  // CREATE NEW NATIONAL MATERIAL CODE
-  // ============================================
 
   const newNationalCode = {
     id: Date.now(),
 
-    code:
-      recommendation.nationalCode,
+    code: recommendation.nationalCode,
 
     description:
       recommendation.standardizedDescription,
@@ -445,13 +306,9 @@ export const approveHarmonization = async (
       recommendation.classification,
 
     riskLevel:
-      recommendation.riskLevel,
+      recommendation.riskLevel || "Low",
 
-    status:
-      "Approved",
-
-
-    // All CPSE materials mapped to this code
+    status: "Approved",
 
     mappedMaterials: [
       sourceMaterial,
@@ -459,27 +316,15 @@ export const approveHarmonization = async (
     ],
   };
 
-
-  // Add newest code at top
-
-  nationalCodes.unshift(
-    newNationalCode
-  );
-
-
-  // Save permanently
+  nationalCodes.unshift(newNationalCode);
 
   localStorage.setItem(
     "nationalCodes",
     JSON.stringify(nationalCodes)
   );
 
-
-  // Add approval to Audit Trail
-
   await addAuditLog({
-    action:
-      "National Material Code Approved",
+    action: "National Material Code Approved",
 
     material:
       recommendation.standardizedDescription,
@@ -494,17 +339,14 @@ export const approveHarmonization = async (
       "Approved",
   });
 
-
   return newNationalCode;
 };
 
-
-// ============================================
-// GET NATIONAL MATERIAL CODES
-// ============================================
-
 export const getNationalCodes = async () => {
-  return nationalCodes;
+  return getStoredData(
+    "nationalCodes",
+    []
+  );
 };
 
 
@@ -516,8 +358,7 @@ const defaultAuditLogs = [
   {
     id: 1,
 
-    action:
-      "AI Match Generated",
+    action: "AI Match Generated",
 
     material:
       "SS Ball Valve 2 Inch",
@@ -536,16 +377,10 @@ const defaultAuditLogs = [
   },
 ];
 
-
 const auditLogs = getStoredData(
   "auditLogs",
   defaultAuditLogs
 );
-
-
-// ============================================
-// ADD AUDIT ACTIVITY
-// ============================================
 
 export const addAuditLog = async ({
   action,
@@ -572,30 +407,19 @@ export const addAuditLog = async ({
     status,
   };
 
-
-  // Add newest activity at top
-
-  auditLogs.unshift(
-    newLog
-  );
-
-
-  // Save permanently
+  auditLogs.unshift(newLog);
 
   localStorage.setItem(
     "auditLogs",
     JSON.stringify(auditLogs)
   );
 
-
   return newLog;
 };
 
-
-// ============================================
-// GET AUDIT ACTIVITIES
-// ============================================
-
 export const getAuditLogs = async () => {
-  return auditLogs;
+  return getStoredData(
+    "auditLogs",
+    defaultAuditLogs
+  );
 };

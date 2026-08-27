@@ -5,21 +5,19 @@ function NationalCodes() {
   const [nationalCodes, setNationalCodes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ============================================
-  // LOAD NATIONAL MATERIAL CODES
-  // ============================================
-
   useEffect(() => {
     const loadNationalCodes = async () => {
       try {
         const data = await getNationalCodes();
 
         setNationalCodes(data || []);
+
       } catch (error) {
         console.error(
           "Failed to load National Material Codes:",
           error
         );
+
       } finally {
         setLoading(false);
       }
@@ -31,21 +29,18 @@ function NationalCodes() {
   return (
     <div className="national-codes-page">
 
-      {/* PAGE HEADER */}
-
       <div className="page-header">
         <div>
-          <h1>Common National Material Codes</h1>
+          <h1>
+            Common National Material Codes
+          </h1>
 
           <p>
-            Approved harmonized materials mapped to their common
-            National Material Codes.
+            Approved harmonized materials mapped to their
+            common National Material Codes.
           </p>
         </div>
       </div>
-
-
-      {/* INFORMATION */}
 
       <div className="national-info">
 
@@ -61,22 +56,15 @@ function NationalCodes() {
 
       </div>
 
-
-      {/* LOADING */}
-
       {loading ? (
 
         <div className="validation-empty">
-
           <h2>
             Loading National Material Codes...
           </h2>
-
         </div>
 
       ) : nationalCodes.length === 0 ? (
-
-        /* EMPTY STATE */
 
         <div className="validation-empty">
 
@@ -85,15 +73,12 @@ function NationalCodes() {
           </h2>
 
           <p>
-            National Material Codes will appear here after an AI
-            harmonization recommendation is approved.
+            National Material Codes will appear here after approval.
           </p>
 
         </div>
 
       ) : (
-
-        /* NATIONAL CODE LIST */
 
         <div className="national-codes-list">
 
@@ -103,8 +88,6 @@ function NationalCodes() {
               className="national-code-card"
               key={item.id}
             >
-
-              {/* CARD HEADER */}
 
               <div className="national-code-header">
 
@@ -124,9 +107,6 @@ function NationalCodes() {
 
                 </div>
 
-
-                {/* NATIONAL CODE */}
-
                 <div className="generated-code-section">
 
                   <div className="generated-code">
@@ -141,9 +121,6 @@ function NationalCodes() {
 
               </div>
 
-
-              {/* HARMONIZED MATERIALS */}
-
               <div className="mapped-materials">
 
                 <h3>
@@ -152,97 +129,61 @@ function NationalCodes() {
 
                 <div className="mapping-table">
 
-                  {item.mappedMaterials &&
-                  item.mappedMaterials.length > 0 ? (
+                  {(item.mappedMaterials || []).map(
+                    (material, index) => (
 
-                    item.mappedMaterials.map(
-                      (material, index) => (
+                      <div
+                        className="mapping-row"
+                        key={`${material.code}-${index}`}
+                      >
 
-                        <div
-                          className="mapping-row"
-                          key={`${material.code}-${index}`}
-                        >
+                        <span className="mapping-cpse">
+                          {material.cpse}
+                        </span>
 
-                          {/* CPSE */}
+                        <span className="mapping-code">
+                          {material.code}
+                        </span>
 
-                          <span className="mapping-cpse">
-                            {material.cpse}
-                          </span>
+                        <span className="mapping-description">
+                          {material.description}
+                        </span>
 
+                      </div>
 
-                          {/* MATERIAL CODE */}
-
-                          <span className="mapping-code">
-                            {material.code}
-                          </span>
-
-
-                          {/* MATERIAL DESCRIPTION */}
-
-                          <span className="mapping-description">
-                            {material.description}
-                          </span>
-
-                        </div>
-
-                      )
                     )
-
-                  ) : (
-
-                    <div className="no-mapped-materials">
-
-                      No CPSE materials mapped yet.
-
-                    </div>
-
                   )}
 
                 </div>
 
               </div>
 
-
-              {/* TOTAL MAPPED MATERIALS */}
-
-              <div className="mapped-count">
+              <div className="code-risk-info">
 
                 <span>
                   Total Mapped Materials:
                 </span>
 
                 <strong>
-                  {item.mappedMaterials?.length || 0}
+                  {(item.mappedMaterials || []).length}
+                </strong>
+
+                <br />
+
+                <span>
+                  Risk Level:
+                </span>
+
+                <strong>
+                  {item.riskLevel}
                 </strong>
 
               </div>
 
-
-              {/* RISK LEVEL */}
-
-              {item.riskLevel && (
-
-                <div className="code-risk-info">
-
-                  <span>
-                    Risk Level:
-                  </span>
-
-                  <strong>
-                    {item.riskLevel}
-                  </strong>
-
-                </div>
-
-              )}
-
-
-              {/* SUCCESS MESSAGE */}
-
               <div className="code-generated-message">
 
-                ✓ National Material Code approved and mapped to the
-                corresponding CPSE material records.
+                ✓ National Material Code approved and mapped to
+                the corresponding CPSE material records.
 
               </div>
 
