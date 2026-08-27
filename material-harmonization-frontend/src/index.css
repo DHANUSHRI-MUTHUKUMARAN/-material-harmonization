@@ -2355,3 +2355,32 @@ body {
     gap: 15px;
   }
 }
+.review-policy {
+  margin: 20px 0 24px;
+  padding: 16px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.review-policy h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.review-policy p {
+  margin: 0;
+  color: #64748b;
+}
+
+.low-risk {
+  border-left: 4px solid #22c55e;
+}
+
+.medium-risk {
+  border-left: 4px solid #f59e0b;
+}
+
+.high-risk {
+  border-left: 4px solid #ef4444;
+}
