@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getHarmonizationRecommendation,
   approveHarmonization,
+  addAuditLog,
 } from "../services/materialService";
 
 function HarmonizationRecommendation() {
@@ -18,7 +19,18 @@ function HarmonizationRecommendation() {
   } = location.state || {};
 
   const [recommendation, setRecommendation] = useState(null);
+
   const [isApproving, setIsApproving] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editedRecommendation, setEditedRecommendation] =
+    useState(null);
+
+
+  // ============================================
+  // LOAD AI RECOMMENDATION
+  // ============================================
 
   useEffect(() => {
     const loadRecommendation = async () => {
@@ -28,6 +40,12 @@ function HarmonizationRecommendation() {
             await getHarmonizationRecommendation(matchId);
 
           setRecommendation(data);
+
+          // Create editable copy
+
+          setEditedRecommendation({
+            ...data,
+          });
         }
       } catch (error) {
         console.error(
@@ -39,6 +57,7 @@ function HarmonizationRecommendation() {
 
     loadRecommendation();
   }, [matchId]);
+
 
   // ============================================
   // CONFIDENCE-BASED INTERVENTION LOGIC
@@ -76,13 +95,19 @@ function HarmonizationRecommendation() {
 
   const reviewPolicy = getReviewPolicy();
 
+
   // ============================================
   // APPROVE HARMONIZATION
   // ============================================
 
   const handleApprove = async () => {
-    if (!recommendation || !sourceMaterial || !matchedMaterial) {
+    if (
+      !editedRecommendation ||
+      !sourceMaterial ||
+      !matchedMaterial
+    ) {
       alert("Harmonization data is not available.");
+
       return;
     }
 
@@ -92,8 +117,18 @@ function HarmonizationRecommendation() {
       await approveHarmonization(
         sourceMaterial,
         matchedMaterial,
-        recommendation
+        editedRecommendation
       );
+
+
+      // If the recommendation was modified,
+      // record that action in the Audit Trail
+
+      if (isEditing === false) {
+        // Approval itself is already logged
+        // inside approveHarmonization()
+      }
+
 
       alert(
         "Harmonization approved and National Material Code created successfully!"
@@ -116,31 +151,142 @@ function HarmonizationRecommendation() {
     }
   };
 
+
   // ============================================
-  // MODIFY
+  // START MODIFY MODE
   // ============================================
 
   const handleModify = () => {
-    alert(
-      "Modify recommendation feature will be implemented here."
-    );
+    setIsEditing(true);
   };
+
+
+  // ============================================
+  // HANDLE FIELD CHANGES
+  // ============================================
+
+  const handleChange = (field, value) => {
+    setEditedRecommendation((previous) => ({
+      ...previous,
+
+      [field]: value,
+    }));
+  };
+
+
+  // ============================================
+  // SAVE MODIFIED RECOMMENDATION
+  // ============================================
+
+  const handleSaveModification = async () => {
+    try {
+      // Update the recommendation shown on screen
+
+      setRecommendation({
+        ...editedRecommendation,
+      });
+
+
+      // Record modification in Audit Trail
+
+      await addAuditLog({
+        action: "Harmonization Recommendation Modified",
+
+        material:
+          editedRecommendation.standardizedDescription,
+
+        materialCode:
+          editedRecommendation.nationalCode,
+
+        user:
+          "Material Validation Officer",
+
+        status:
+          "Updated",
+      });
+
+
+      setIsEditing(false);
+
+      alert(
+        "Recommendation updated successfully. You can now approve or reject it."
+      );
+
+    } catch (error) {
+      console.error(
+        "Failed to update recommendation:",
+        error
+      );
+
+      alert(
+        "Something went wrong while updating the recommendation."
+      );
+    }
+  };
+
+
+  // ============================================
+  // CANCEL MODIFICATION
+  // ============================================
+
+  const handleCancelModification = () => {
+    setEditedRecommendation({
+      ...recommendation,
+    });
+
+    setIsEditing(false);
+  };
+
 
   // ============================================
   // REJECT
   // ============================================
 
-  const handleReject = () => {
+  const handleReject = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to reject this harmonization recommendation?"
     );
 
-    if (confirmed) {
-      alert("Harmonization recommendation rejected.");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await addAuditLog({
+        action: "Harmonization Rejected",
+
+        material:
+          recommendation.standardizedDescription,
+
+        materialCode:
+          recommendation.nationalCode,
+
+        user:
+          "Material Validation Officer",
+
+        status:
+          "Rejected",
+      });
+
+
+      alert(
+        "Harmonization recommendation rejected."
+      );
 
       navigate("/ai-matching");
+
+    } catch (error) {
+      console.error(
+        "Failed to reject recommendation:",
+        error
+      );
+
+      alert(
+        "Something went wrong while rejecting the recommendation."
+      );
     }
   };
+
 
   // ============================================
   // NO DATA
@@ -149,9 +295,12 @@ function HarmonizationRecommendation() {
   if (!sourceMaterial || !matchedMaterial) {
     return (
       <div className="harmonization-page">
+
         <div className="validation-empty">
 
-          <h2>No harmonization data available</h2>
+          <h2>
+            No harmonization data available
+          </h2>
 
           <p>
             Go to AI Matching and select a material to generate a
@@ -160,26 +309,33 @@ function HarmonizationRecommendation() {
 
           <button
             className="go-ai-btn"
-            onClick={() => navigate("/ai-matching")}
+            onClick={() =>
+              navigate("/ai-matching")
+            }
           >
             Go to AI Matching
           </button>
 
         </div>
+
       </div>
     );
   }
+
 
   // ============================================
   // LOADING
   // ============================================
 
-  if (!recommendation) {
+  if (!recommendation || !editedRecommendation) {
     return (
       <div className="harmonization-page">
+
         <div className="validation-empty">
 
-          <h2>Generating AI Recommendation...</h2>
+          <h2>
+            Generating AI Recommendation...
+          </h2>
 
           <p>
             Analyzing material attributes and generating the
@@ -187,16 +343,26 @@ function HarmonizationRecommendation() {
           </p>
 
         </div>
+
       </div>
     );
   }
 
+
+  // ============================================
+  // UI
+  // ============================================
+
   return (
     <div className="harmonization-page">
 
-      {/* MATERIAL CLUSTER */}
+
+      {/* ========================================
+          MATERIAL CLUSTER
+      ======================================== */}
 
       <div className="page-header">
+
         <div>
 
           <p className="cluster-label">
@@ -208,31 +374,42 @@ function HarmonizationRecommendation() {
           </h1>
 
           <p>
-            {sourceMaterial.code} • {sourceMaterial.cpse}
+            {sourceMaterial.code}
+            {" • "}
+            {sourceMaterial.cpse}
           </p>
 
         </div>
+
       </div>
 
 
-      {/* RELATED MATERIAL */}
+      {/* ========================================
+          RELATED MATERIAL
+      ======================================== */}
 
       <div className="related-material">
 
-        <span>RELATED MATERIAL</span>
+        <span>
+          RELATED MATERIAL
+        </span>
 
         <h3>
           {matchedMaterial.description}
         </h3>
 
         <p>
-          {matchedMaterial.code} • {matchedMaterial.cpse}
+          {matchedMaterial.code}
+          {" • "}
+          {matchedMaterial.cpse}
         </p>
 
       </div>
 
 
-      {/* AI RECOMMENDATION */}
+      {/* ========================================
+          AI RECOMMENDATION
+      ======================================== */}
 
       <div className="harmonization-card">
 
@@ -241,15 +418,19 @@ function HarmonizationRecommendation() {
           <div>
 
             <h2>
-              AI Harmonization Recommendation
+              {isEditing
+                ? "Modify Harmonization Recommendation"
+                : "AI Harmonization Recommendation"}
             </h2>
 
             <p>
-              Generated based on semantic similarity and material
-              attribute analysis.
+              {isEditing
+                ? "Review and modify the AI-generated recommendation before approval."
+                : "Generated based on semantic similarity and material attribute analysis."}
             </p>
 
           </div>
+
 
           <div className="ai-confidence">
 
@@ -268,18 +449,42 @@ function HarmonizationRecommendation() {
 
         <div className="recommendation-grid">
 
+
+          {/* STANDARDIZED DESCRIPTION */}
+
           <div className="recommendation-box">
 
             <span>
               STANDARDIZED DESCRIPTION
             </span>
 
-            <strong>
-              {recommendation.standardizedDescription}
-            </strong>
+            {isEditing ? (
+
+              <input
+                type="text"
+                value={
+                  editedRecommendation.standardizedDescription
+                }
+                onChange={(e) =>
+                  handleChange(
+                    "standardizedDescription",
+                    e.target.value
+                  )
+                }
+              />
+
+            ) : (
+
+              <strong>
+                {recommendation.standardizedDescription}
+              </strong>
+
+            )}
 
           </div>
 
+
+          {/* EXTRACTED ATTRIBUTES */}
 
           <div className="recommendation-box">
 
@@ -288,17 +493,23 @@ function HarmonizationRecommendation() {
             </span>
 
             <ul>
+
               {recommendation.attributes.map(
                 (attribute, index) => (
+
                   <li key={index}>
                     {attribute}
                   </li>
+
                 )
               )}
+
             </ul>
 
           </div>
 
+
+          {/* CLASSIFICATION */}
 
           <div className="recommendation-box">
 
@@ -306,12 +517,33 @@ function HarmonizationRecommendation() {
               RECOMMENDED CLASSIFICATION
             </span>
 
-            <strong>
-              {recommendation.classification}
-            </strong>
+            {isEditing ? (
+
+              <input
+                type="text"
+                value={
+                  editedRecommendation.classification
+                }
+                onChange={(e) =>
+                  handleChange(
+                    "classification",
+                    e.target.value
+                  )
+                }
+              />
+
+            ) : (
+
+              <strong>
+                {recommendation.classification}
+              </strong>
+
+            )}
 
           </div>
 
+
+          {/* NATIONAL MATERIAL CODE */}
 
           <div className="recommendation-box national-code">
 
@@ -319,9 +551,28 @@ function HarmonizationRecommendation() {
               PROPOSED NATIONAL MATERIAL CODE
             </span>
 
-            <strong>
-              {recommendation.nationalCode}
-            </strong>
+            {isEditing ? (
+
+              <input
+                type="text"
+                value={
+                  editedRecommendation.nationalCode
+                }
+                onChange={(e) =>
+                  handleChange(
+                    "nationalCode",
+                    e.target.value
+                  )
+                }
+              />
+
+            ) : (
+
+              <strong>
+                {recommendation.nationalCode}
+              </strong>
+
+            )}
 
             <p>
               Generated for the harmonized material identity.
@@ -329,14 +580,59 @@ function HarmonizationRecommendation() {
 
           </div>
 
+
+          {/* RISK LEVEL */}
+
+          {isEditing && (
+
+            <div className="recommendation-box">
+
+              <span>
+                RISK LEVEL
+              </span>
+
+              <select
+                value={
+                  editedRecommendation.riskLevel
+                }
+                onChange={(e) =>
+                  handleChange(
+                    "riskLevel",
+                    e.target.value
+                  )
+                }
+              >
+
+                <option value="Low">
+                  Low
+                </option>
+
+                <option value="Medium">
+                  Medium
+                </option>
+
+                <option value="High">
+                  High
+                </option>
+
+              </select>
+
+            </div>
+
+          )}
+
         </div>
 
       </div>
 
 
-      {/* CONFIDENCE / REVIEW POLICY */}
+      {/* ========================================
+          CONFIDENCE / REVIEW POLICY
+      ======================================== */}
 
-      <div className={`review-policy ${reviewPolicy.className}`}>
+      <div
+        className={`review-policy ${reviewPolicy.className}`}
+      >
 
         <h3>
           AI Review Policy: {reviewPolicy.action}
@@ -349,7 +645,9 @@ function HarmonizationRecommendation() {
       </div>
 
 
-      {/* METRICS */}
+      {/* ========================================
+          METRICS
+      ======================================== */}
 
       <div className="recommendation-metrics">
 
@@ -394,7 +692,9 @@ function HarmonizationRecommendation() {
       </div>
 
 
-      {/* AI EXPLANATION */}
+      {/* ========================================
+          AI EXPLANATION
+      ======================================== */}
 
       <div className="ai-explanation">
 
@@ -428,39 +728,72 @@ function HarmonizationRecommendation() {
       </div>
 
 
-      {/* ACTIONS */}
+      {/* ========================================
+          ACTIONS
+      ======================================== */}
 
       <div className="harmonization-actions">
 
-        <button
-          className="approve-harmonization-btn"
-          onClick={handleApprove}
-          disabled={isApproving}
-        >
-          {isApproving
-            ? "Processing..."
-            : similarity >= 95
-            ? "⚡ Fast-Track Approve"
-            : "✓ Approve Harmonization"}
-        </button>
+        {isEditing ? (
+
+          <>
+
+            <button
+              className="approve-harmonization-btn"
+              onClick={handleSaveModification}
+            >
+              ✓ Save Changes
+            </button>
 
 
-        <button
-          className="modify-harmonization-btn"
-          onClick={handleModify}
-          disabled={isApproving}
-        >
-          ✎ Modify Recommendation
-        </button>
+            <button
+              className="reject-harmonization-btn"
+              onClick={handleCancelModification}
+            >
+              Cancel
+            </button>
+
+          </>
+
+        ) : (
+
+          <>
+
+            <button
+              className="approve-harmonization-btn"
+              onClick={handleApprove}
+              disabled={isApproving}
+            >
+
+              {isApproving
+                ? "Processing..."
+                : similarity >= 95
+                ? "⚡ Fast-Track Approve"
+                : "✓ Approve Harmonization"}
+
+            </button>
 
 
-        <button
-          className="reject-harmonization-btn"
-          onClick={handleReject}
-          disabled={isApproving}
-        >
-          ✕ Reject Recommendation
-        </button>
+            <button
+              className="modify-harmonization-btn"
+              onClick={handleModify}
+              disabled={isApproving}
+            >
+              ✎ Modify Recommendation
+            </button>
+
+
+            <button
+              className="reject-harmonization-btn"
+              onClick={handleReject}
+              disabled={isApproving}
+            >
+              ✕ Reject Recommendation
+            </button>
+
+          </>
+
+        )}
 
       </div>
 

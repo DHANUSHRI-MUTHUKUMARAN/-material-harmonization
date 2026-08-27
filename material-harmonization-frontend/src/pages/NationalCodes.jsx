@@ -5,6 +5,10 @@ function NationalCodes() {
   const [nationalCodes, setNationalCodes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ============================================
+  // LOAD NATIONAL MATERIAL CODES
+  // ============================================
+
   useEffect(() => {
     const loadNationalCodes = async () => {
       try {
@@ -126,15 +130,11 @@ function NationalCodes() {
                 <div className="generated-code-section">
 
                   <div className="generated-code">
-
                     {item.code}
-
                   </div>
 
                   <span className="code-status">
-
                     {item.status}
-
                   </span>
 
                 </div>
@@ -152,65 +152,68 @@ function NationalCodes() {
 
                 <div className="mapping-table">
 
+                  {item.mappedMaterials &&
+                  item.mappedMaterials.length > 0 ? (
 
-                  {/* SOURCE MATERIAL */}
+                    item.mappedMaterials.map(
+                      (material, index) => (
 
-                  {item.sourceMaterial && (
+                        <div
+                          className="mapping-row"
+                          key={`${material.code}-${index}`}
+                        >
 
-                    <div className="mapping-row">
+                          {/* CPSE */}
 
-                      <span className="mapping-cpse">
-
-                        {item.sourceMaterial.cpse}
-
-                      </span>
-
-                      <span className="mapping-code">
-
-                        {item.sourceMaterial.code}
-
-                      </span>
-
-                      <span className="mapping-description">
-
-                        {item.sourceMaterial.description}
-
-                      </span>
-
-                    </div>
-
-                  )}
+                          <span className="mapping-cpse">
+                            {material.cpse}
+                          </span>
 
 
-                  {/* MATCHED MATERIAL */}
+                          {/* MATERIAL CODE */}
 
-                  {item.matchedMaterial && (
+                          <span className="mapping-code">
+                            {material.code}
+                          </span>
 
-                    <div className="mapping-row">
 
-                      <span className="mapping-cpse">
+                          {/* MATERIAL DESCRIPTION */}
 
-                        {item.matchedMaterial.cpse}
+                          <span className="mapping-description">
+                            {material.description}
+                          </span>
 
-                      </span>
+                        </div>
 
-                      <span className="mapping-code">
+                      )
+                    )
 
-                        {item.matchedMaterial.code}
+                  ) : (
 
-                      </span>
+                    <div className="no-mapped-materials">
 
-                      <span className="mapping-description">
-
-                        {item.matchedMaterial.description}
-
-                      </span>
+                      No CPSE materials mapped yet.
 
                     </div>
 
                   )}
 
                 </div>
+
+              </div>
+
+
+              {/* TOTAL MAPPED MATERIALS */}
+
+              <div className="mapped-count">
+
+                <span>
+                  Total Mapped Materials:
+                </span>
+
+                <strong>
+                  {item.mappedMaterials?.length || 0}
+                </strong>
 
               </div>
 

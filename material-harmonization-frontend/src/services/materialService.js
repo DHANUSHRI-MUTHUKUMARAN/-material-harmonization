@@ -245,8 +245,9 @@ const harmonizationRecommendations = {
     classification:
       "Valves → Ball Valves → Stainless Steel",
 
+    // Same harmonized material family
     nationalCode:
-      "NMC-VAL-SS-BALL-0003",
+      "NMC-VAL-SS-BALL-0001",
 
     riskLevel: "Medium",
   },
@@ -290,15 +291,29 @@ const getStoredData = (key, defaultValue) => {
 // NATIONAL MATERIAL CODES
 // ============================================
 
-// Load saved National Material Codes
-
 const nationalCodes = getStoredData(
   "nationalCodes",
   []
 );
 
 
-// Approve harmonization and create National Material Code
+// ============================================
+// CHECK IF MATERIAL ALREADY EXISTS
+// ============================================
+
+const materialExists = (
+  mappedMaterials,
+  material
+) => {
+  return mappedMaterials.some(
+    (item) => item.code === material.code
+  );
+};
+
+
+// ============================================
+// APPROVE HARMONIZATION
+// ============================================
 
 export const approveHarmonization = async (
   sourceMaterial,
@@ -317,24 +332,111 @@ export const approveHarmonization = async (
   }
 
 
-  // Prevent duplicate National Material Codes
+  // ============================================
+  // CHECK IF NATIONAL CODE ALREADY EXISTS
+  // ============================================
 
   const existingCode = nationalCodes.find(
     (item) =>
       item.code === recommendation.nationalCode
   );
 
+
+  // ============================================
+  // IF CODE EXISTS → ADD NEW MATERIALS
+  // ============================================
+
   if (existingCode) {
+
+    // Ensure mappedMaterials exists
+    if (!existingCode.mappedMaterials) {
+
+      existingCode.mappedMaterials = [];
+
+      // Migrate old data structure if needed
+
+      if (existingCode.sourceMaterial) {
+        existingCode.mappedMaterials.push(
+          existingCode.sourceMaterial
+        );
+      }
+
+      if (existingCode.matchedMaterial) {
+        existingCode.mappedMaterials.push(
+          existingCode.matchedMaterial
+        );
+      }
+    }
+
+
+    // Add source material if not already mapped
+
+    if (
+      !materialExists(
+        existingCode.mappedMaterials,
+        sourceMaterial
+      )
+    ) {
+      existingCode.mappedMaterials.push(
+        sourceMaterial
+      );
+    }
+
+
+    // Add matched material if not already mapped
+
+    if (
+      !materialExists(
+        existingCode.mappedMaterials,
+        matchedMaterial
+      )
+    ) {
+      existingCode.mappedMaterials.push(
+        matchedMaterial
+      );
+    }
+
+
+    // Save updated National Codes
+
+    localStorage.setItem(
+      "nationalCodes",
+      JSON.stringify(nationalCodes)
+    );
+
+
+    // Add audit log
+
+    await addAuditLog({
+      action: "Material Added to National Code",
+
+      material:
+        recommendation.standardizedDescription,
+
+      materialCode:
+        recommendation.nationalCode,
+
+      user:
+        "Material Validation Officer",
+
+      status:
+        "Approved",
+    });
+
+
     return existingCode;
   }
 
 
-  // Create new National Material Code
+  // ============================================
+  // CREATE NEW NATIONAL MATERIAL CODE
+  // ============================================
 
   const newNationalCode = {
     id: Date.now(),
 
-    code: recommendation.nationalCode,
+    code:
+      recommendation.nationalCode,
 
     description:
       recommendation.standardizedDescription,
@@ -345,17 +447,24 @@ export const approveHarmonization = async (
     riskLevel:
       recommendation.riskLevel,
 
-    status: "Approved",
+    status:
+      "Approved",
 
-    sourceMaterial,
 
-    matchedMaterial,
+    // All CPSE materials mapped to this code
+
+    mappedMaterials: [
+      sourceMaterial,
+      matchedMaterial,
+    ],
   };
 
 
-  // Add newest code at the top
+  // Add newest code at top
 
-  nationalCodes.unshift(newNationalCode);
+  nationalCodes.unshift(
+    newNationalCode
+  );
 
 
   // Save permanently
@@ -369,7 +478,8 @@ export const approveHarmonization = async (
   // Add approval to Audit Trail
 
   await addAuditLog({
-    action: "Harmonization Approved",
+    action:
+      "National Material Code Approved",
 
     material:
       recommendation.standardizedDescription,
@@ -389,7 +499,9 @@ export const approveHarmonization = async (
 };
 
 
-// Get all approved National Material Codes
+// ============================================
+// GET NATIONAL MATERIAL CODES
+// ============================================
 
 export const getNationalCodes = async () => {
   return nationalCodes;
@@ -400,28 +512,30 @@ export const getNationalCodes = async () => {
 // AUDIT TRAIL
 // ============================================
 
-// Default audit logs
-
 const defaultAuditLogs = [
   {
     id: 1,
 
-    action: "AI Match Generated",
+    action:
+      "AI Match Generated",
 
-    material: "SS Ball Valve 2 Inch",
+    material:
+      "SS Ball Valve 2 Inch",
 
-    materialCode: "CPCL-VAL-1023",
+    materialCode:
+      "CPCL-VAL-1023",
 
-    user: "AI Matching Engine",
+    user:
+      "AI Matching Engine",
 
-    time: "System Generated",
+    time:
+      "System Generated",
 
-    status: "AI Generated",
+    status:
+      "AI Generated",
   },
 ];
 
-
-// Load saved audit logs
 
 const auditLogs = getStoredData(
   "auditLogs",
@@ -429,7 +543,9 @@ const auditLogs = getStoredData(
 );
 
 
-// Add a new audit activity
+// ============================================
+// ADD AUDIT ACTIVITY
+// ============================================
 
 export const addAuditLog = async ({
   action,
@@ -450,15 +566,18 @@ export const addAuditLog = async ({
 
     user,
 
-    time: new Date().toLocaleString(),
+    time:
+      new Date().toLocaleString(),
 
     status,
   };
 
 
-  // Add newest log at the top
+  // Add newest activity at top
 
-  auditLogs.unshift(newLog);
+  auditLogs.unshift(
+    newLog
+  );
 
 
   // Save permanently
@@ -473,7 +592,9 @@ export const addAuditLog = async ({
 };
 
 
-// Get all audit activities
+// ============================================
+// GET AUDIT ACTIVITIES
+// ============================================
 
 export const getAuditLogs = async () => {
   return auditLogs;
