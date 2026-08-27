@@ -1,9 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  getHarmonizationRecommendation,
-  addAuditLog,
-} from "../services/materialService";
+import { getHarmonizationRecommendation } from "../services/materialService";
 
 function HarmonizationRecommendation() {
   const navigate = useNavigate();
@@ -18,13 +15,10 @@ function HarmonizationRecommendation() {
   } = location.state || {};
 
   const [recommendation, setRecommendation] = useState(null);
-  const [editedRecommendation, setEditedRecommendation] =
-    useState(null);
-
-  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // ============================================
-  // LOAD AI RECOMMENDATION
+  // LOAD AI HARMONIZATION RECOMMENDATION
   // ============================================
 
   useEffect(() => {
@@ -35,16 +29,14 @@ function HarmonizationRecommendation() {
             await getHarmonizationRecommendation(matchId);
 
           setRecommendation(data);
-
-          setEditedRecommendation({
-            ...data,
-          });
         }
       } catch (error) {
         console.error(
           "Failed to load harmonization recommendation:",
           error
         );
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -58,29 +50,29 @@ function HarmonizationRecommendation() {
   const getReviewPolicy = () => {
     if (similarity >= 95) {
       return {
-        level: "Low",
-        action: "Fast-Track Review",
+        level: "Minimal",
+        action: "Fast-Forward Processing",
         message:
-          "High-confidence recommendation. A human validator can perform a quick review before approval.",
+          "This is a high-confidence AI recommendation. Material harmonization can be fast-forwarded, with final human approval required for the proposed National Material Code.",
         className: "low-risk",
       };
     }
 
     if (similarity >= 85) {
       return {
-        level: "Medium",
-        action: "Human Review Recommended",
+        level: "Partial",
+        action: "Human Review Required",
         message:
-          "Moderate-confidence recommendation. Human review is recommended before approval.",
+          "This recommendation has moderate AI confidence. A human reviewer should verify the harmonization before proceeding.",
         className: "medium-risk",
       };
     }
 
     return {
-      level: "High",
-      action: "Human Validation Required",
+      level: "Full",
+      action: "Detailed Human Validation Required",
       message:
-        "Lower-confidence recommendation. Detailed human validation is required before approval.",
+        "This recommendation has lower AI confidence. Detailed human validation of the material match, attributes, and classification is required.",
       className: "high-risk",
     };
   };
@@ -88,145 +80,88 @@ function HarmonizationRecommendation() {
   const reviewPolicy = getReviewPolicy();
 
   // ============================================
-  // START MODIFY MODE
+  // CONTINUE BASED ON AI CONFIDENCE
   // ============================================
 
-  const handleModify = () => {
-    setIsEditing(true);
-  };
-
-  // ============================================
-  // HANDLE FIELD CHANGES
-  // ============================================
-
-  const handleChange = (field, value) => {
-    setEditedRecommendation((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  };
-
-  // ============================================
-  // SAVE MODIFICATION
-  // ============================================
-
-  const handleSaveModification = async () => {
-    try {
-      setRecommendation({
-        ...editedRecommendation,
-      });
-
-      await addAuditLog({
-        action: "Harmonization Recommendation Modified",
-        material:
-          editedRecommendation.standardizedDescription,
-        materialCode:
-          editedRecommendation.nationalCode,
-        user: "Material Validation Officer",
-        status: "Updated",
-      });
-
-      setIsEditing(false);
-
-      alert(
-        "Recommendation updated successfully."
-      );
-    } catch (error) {
-      console.error(
-        "Failed to update recommendation:",
-        error
-      );
-
-      alert(
-        "Something went wrong while updating the recommendation."
-      );
+  const handleContinue = () => {
+    if (!recommendation) {
+      alert("Harmonization recommendation is not available.");
+      return;
     }
-  };
 
-  // ============================================
-  // CANCEL MODIFICATION
-  // ============================================
+    const navigationData = {
+      sourceMaterial,
+      matchedMaterial,
+      similarity,
+      matchType,
+      matchId,
+      recommendation,
+    };
 
-  const handleCancelModification = () => {
-    setEditedRecommendation({
-      ...recommendation,
-    });
+    // 95–100%
+    // Fast-forward directly to National Code Approval
 
-    setIsEditing(false);
-  };
-
-  // ============================================
-  // SEND FOR HUMAN VALIDATION
-  // ============================================
-
-  const handleSendForValidation = async () => {
-    if (
-      !editedRecommendation ||
-      !sourceMaterial ||
-      !matchedMaterial
-    ) {
-      alert(
-        "Harmonization data is not available."
-      );
+    if (similarity >= 95) {
+      navigate("/national-code-approval", {
+        state: navigationData,
+      });
 
       return;
     }
 
-    try {
-      await addAuditLog({
-        action: "Harmonization Sent for Validation",
-        material:
-          editedRecommendation.standardizedDescription,
-        materialCode:
-          editedRecommendation.nationalCode,
-        user: "AI Matching Engine",
-        status: "Generated",
-      });
+    // 85–94%
+    // Standard human review
 
+    if (similarity >= 85) {
       navigate("/validation", {
         state: {
-          sourceMaterial,
-          matchedMaterial,
-          similarity,
-          matchType,
-          matchId,
-          recommendation: editedRecommendation,
+          ...navigationData,
+          detailedReview: false,
         },
       });
-    } catch (error) {
-      console.error(
-        "Failed to send recommendation for validation:",
-        error
-      );
 
-      alert(
-        "Something went wrong while sending the recommendation for validation."
-      );
+      return;
     }
+
+    // Below 85%
+    // Detailed human validation
+
+    navigate("/validation", {
+      state: {
+        ...navigationData,
+        detailedReview: true,
+      },
+    });
+  };
+
+  // ============================================
+  // MODIFY RECOMMENDATION
+  // ============================================
+
+  const handleModify = () => {
+    alert(
+      "Recommendation modification can be performed during the human validation stage."
+    );
   };
 
   // ============================================
   // NO DATA
   // ============================================
 
-  if (!sourceMaterial || !matchedMaterial) {
+  if (!sourceMaterial || !matchedMaterial || !matchId) {
     return (
       <div className="harmonization-page">
         <div className="validation-empty">
-          <h2>
-            No harmonization data available
-          </h2>
+          <h2>No harmonization data available</h2>
 
           <p>
-            Go to AI Matching and select a material
-            to generate a harmonization recommendation.
+            Go to AI Matching and select a material to generate
+            a harmonization recommendation.
           </p>
 
           <button
             className="go-ai-btn"
-            onClick={() =>
-              navigate("/ai-matching")
-            }
+            onClick={() => navigate("/ai-matching")}
           >
             Go to AI Matching
           </button>
@@ -239,17 +174,15 @@ function HarmonizationRecommendation() {
   // LOADING
   // ============================================
 
-  if (!recommendation || !editedRecommendation) {
+  if (loading || !recommendation) {
     return (
       <div className="harmonization-page">
         <div className="validation-empty">
-          <h2>
-            Generating AI Recommendation...
-          </h2>
+          <h2>Generating AI Recommendation...</h2>
 
           <p>
-            Analyzing material attributes and
-            generating the harmonized material identity.
+            Analyzing material attributes and generating
+            the harmonized material identity.
           </p>
         </div>
       </div>
@@ -257,13 +190,13 @@ function HarmonizationRecommendation() {
   }
 
   // ============================================
-  // UI
+  // PAGE
   // ============================================
 
   return (
     <div className="harmonization-page">
 
-      {/* MATERIAL CLUSTER */}
+      {/* PAGE HEADER */}
 
       <div className="page-header">
         <div>
@@ -276,9 +209,7 @@ function HarmonizationRecommendation() {
           </h1>
 
           <p>
-            {sourceMaterial.code}
-            {" • "}
-            {sourceMaterial.cpse}
+            {sourceMaterial.code} • {sourceMaterial.cpse}
           </p>
         </div>
       </div>
@@ -286,18 +217,14 @@ function HarmonizationRecommendation() {
       {/* RELATED MATERIAL */}
 
       <div className="related-material">
-        <span>
-          RELATED MATERIAL
-        </span>
+        <span>RELATED MATERIAL</span>
 
         <h3>
           {matchedMaterial.description}
         </h3>
 
         <p>
-          {matchedMaterial.code}
-          {" • "}
-          {matchedMaterial.cpse}
+          {matchedMaterial.code} • {matchedMaterial.cpse}
         </p>
       </div>
 
@@ -309,15 +236,12 @@ function HarmonizationRecommendation() {
 
           <div>
             <h2>
-              {isEditing
-                ? "Modify Harmonization Recommendation"
-                : "AI Harmonization Recommendation"}
+              AI Harmonization Recommendation
             </h2>
 
             <p>
-              {isEditing
-                ? "Review and modify the AI-generated recommendation before sending it for human validation."
-                : "Generated based on semantic similarity and material attribute analysis."}
+              Generated based on semantic similarity and
+              material attribute analysis.
             </p>
           </div>
 
@@ -333,47 +257,31 @@ function HarmonizationRecommendation() {
 
         </div>
 
+        {/* RECOMMENDATION DETAILS */}
+
         <div className="recommendation-grid">
 
           {/* STANDARDIZED DESCRIPTION */}
 
           <div className="recommendation-box">
-
             <span>
               STANDARDIZED DESCRIPTION
             </span>
 
-            {isEditing ? (
-              <input
-                type="text"
-                value={
-                  editedRecommendation.standardizedDescription
-                }
-                onChange={(e) =>
-                  handleChange(
-                    "standardizedDescription",
-                    e.target.value
-                  )
-                }
-              />
-            ) : (
-              <strong>
-                {recommendation.standardizedDescription}
-              </strong>
-            )}
-
+            <strong>
+              {recommendation.standardizedDescription}
+            </strong>
           </div>
 
-          {/* EXTRACTED ATTRIBUTES */}
+          {/* ATTRIBUTES */}
 
           <div className="recommendation-box">
-
             <span>
               EXTRACTED ATTRIBUTES
             </span>
 
             <ul>
-              {editedRecommendation.attributes.map(
+              {recommendation.attributes.map(
                 (attribute, index) => (
                   <li key={index}>
                     {attribute}
@@ -381,119 +289,54 @@ function HarmonizationRecommendation() {
                 )
               )}
             </ul>
-
           </div>
 
           {/* CLASSIFICATION */}
 
           <div className="recommendation-box">
-
             <span>
               RECOMMENDED CLASSIFICATION
             </span>
 
-            {isEditing ? (
-              <input
-                type="text"
-                value={
-                  editedRecommendation.classification
-                }
-                onChange={(e) =>
-                  handleChange(
-                    "classification",
-                    e.target.value
-                  )
-                }
-              />
-            ) : (
-              <strong>
-                {recommendation.classification}
-              </strong>
-            )}
-
+            <strong>
+              {recommendation.classification}
+            </strong>
           </div>
 
-          {/* NATIONAL MATERIAL CODE */}
+          {/* NATIONAL CODE */}
 
           <div className="recommendation-box national-code">
-
             <span>
               PROPOSED NATIONAL MATERIAL CODE
             </span>
 
-            {isEditing ? (
-              <input
-                type="text"
-                value={
-                  editedRecommendation.nationalCode
-                }
-                onChange={(e) =>
-                  handleChange(
-                    "nationalCode",
-                    e.target.value
-                  )
-                }
-              />
-            ) : (
-              <strong>
-                {recommendation.nationalCode}
-              </strong>
-            )}
+            <strong>
+              {recommendation.nationalCode}
+            </strong>
 
             <p>
-              Proposed for the harmonized material identity.
+              Generated for the harmonized material identity.
             </p>
-
           </div>
-
-          {/* RISK LEVEL */}
-
-          {isEditing && (
-            <div className="recommendation-box">
-
-              <span>
-                RISK LEVEL
-              </span>
-
-              <select
-                value={
-                  editedRecommendation.riskLevel
-                }
-                onChange={(e) =>
-                  handleChange(
-                    "riskLevel",
-                    e.target.value
-                  )
-                }
-              >
-                <option value="Low">
-                  Low
-                </option>
-
-                <option value="Medium">
-                  Medium
-                </option>
-
-                <option value="High">
-                  High
-                </option>
-              </select>
-
-            </div>
-          )}
 
         </div>
 
       </div>
 
-      {/* REVIEW POLICY */}
+      {/* CONFIDENCE-BASED POLICY */}
 
       <div
         className={`review-policy ${reviewPolicy.className}`}
       >
         <h3>
-          AI Review Policy: {reviewPolicy.action}
+          Intervention Level: {reviewPolicy.level}
         </h3>
+
+        <p>
+          <strong>
+            {reviewPolicy.action}
+          </strong>
+        </p>
 
         <p>
           {reviewPolicy.message}
@@ -526,7 +369,7 @@ function HarmonizationRecommendation() {
 
         <div className="metric-box">
           <span>
-            Intervention Level
+            Human Intervention
           </span>
 
           <strong>
@@ -546,24 +389,22 @@ function HarmonizationRecommendation() {
 
         <ul>
           <li>
-            Material descriptions show strong
-            semantic similarity.
+            Material descriptions show strong semantic similarity.
           </li>
 
           <li>
-            Technical attributes indicate an
-            equivalent material configuration.
+            Technical attributes indicate an equivalent
+            material configuration.
           </li>
 
           <li>
-            Cross-CPSE material records were grouped
-            into a harmonization cluster.
+            Cross-CPSE material records were grouped into
+            a harmonization cluster.
           </li>
 
           <li>
-            A standardized description and
-            classification were generated from the
-            identified attributes.
+            A standardized description and classification
+            were generated from the identified attributes.
           </li>
         </ul>
 
@@ -573,39 +414,32 @@ function HarmonizationRecommendation() {
 
       <div className="harmonization-actions">
 
-        {isEditing ? (
-          <>
-            <button
-              className="approve-harmonization-btn"
-              onClick={handleSaveModification}
-            >
-              ✓ Save Changes
-            </button>
+        <button
+          className="approve-harmonization-btn"
+          onClick={handleContinue}
+        >
+          {similarity >= 95
+            ? "⚡ Fast-Forward to National Code Approval"
+            : similarity >= 85
+            ? "Proceed to Human Review"
+            : "Proceed to Detailed Validation"}
+        </button>
 
-            <button
-              className="reject-harmonization-btn"
-              onClick={handleCancelModification}
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="approve-harmonization-btn"
-              onClick={handleSendForValidation}
-            >
-              Send for Human Validation →
-            </button>
-
-            <button
-              className="modify-harmonization-btn"
-              onClick={handleModify}
-            >
-              ✎ Modify Recommendation
-            </button>
-          </>
+        {similarity < 95 && (
+          <button
+            className="modify-harmonization-btn"
+            onClick={handleModify}
+          >
+            ✎ Modify During Review
+          </button>
         )}
+
+        <button
+          className="reject-harmonization-btn"
+          onClick={() => navigate("/ai-matching")}
+        >
+          ← Back to AI Matching
+        </button>
 
       </div>
 
