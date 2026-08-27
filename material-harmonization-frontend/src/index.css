@@ -1831,3 +1831,307 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* ========================================
+   AI HARMONIZATION REVIEW
+======================================== */
+
+.validation-page {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Harmonization Cluster */
+
+.harmonization-cluster {
+  background: white;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.cluster-materials {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.cluster-material {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cluster-material h3 {
+  margin: 12px 0 6px;
+  color: #1e293b;
+}
+
+.cluster-material p {
+  margin: 0;
+  color: #64748b;
+}
+
+.cluster-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.cluster-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  min-width: 90px;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+/* AI Recommendation */
+
+.harmonization-recommendation {
+  background: white;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.recommendation-header h2 {
+  margin: 0 0 8px;
+  color: #1e293b;
+}
+
+.recommendation-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.recommendation-confidence {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  font-size: 28px;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.recommendation-confidence span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Recommendation Cards */
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.recommendation-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.recommendation-card span {
+  display: block;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  color: #64748b;
+
+  margin-bottom: 10px;
+}
+
+.recommendation-card h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.recommendation-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+}
+
+.recommendation-card li {
+  margin-bottom: 6px;
+}
+
+/* National Code */
+
+.national-code-card {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.national-code-card h2 {
+  margin: 0 0 8px;
+  color: #1d4ed8;
+}
+
+.national-code-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Confidence Section */
+
+.confidence-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+
+  margin-bottom: 24px;
+}
+
+.confidence-section div {
+  background: white;
+  border: 1px solid #dbe1ea;
+
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.confidence-section span {
+  display: block;
+
+  font-size: 12px;
+  color: #64748b;
+
+  margin-bottom: 8px;
+}
+
+.confidence-section strong {
+  font-size: 18px;
+  color: #1e293b;
+}
+
+/* AI Explanation */
+
+.validation-reasons {
+  background: white;
+
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+
+  padding: 24px;
+
+  margin-bottom: 24px;
+}
+
+.validation-reasons h3 {
+  margin-top: 0;
+  color: #1e293b;
+}
+
+.validation-reasons ul {
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+.validation-reasons li {
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+/* Action Buttons */
+
+.validation-actions {
+  display: flex;
+  gap: 14px;
+
+  margin-top: 10px;
+}
+
+.validation-actions button {
+  border: none;
+  border-radius: 8px;
+
+  padding: 12px 20px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.approve-btn {
+  background: #16a34a;
+  color: white;
+}
+
+.details-btn {
+  background: white;
+  color: #334155;
+
+  border: 1px solid #cbd5e1 !important;
+}
+
+.reject-btn {
+  background: #dc2626;
+  color: white;
+}
+
+/* Responsive */
+
+@media (max-width: 800px) {
+
+  .cluster-materials {
+    flex-direction: column;
+  }
+
+  .cluster-arrow {
+    min-height: 40px;
+  }
+
+  .recommendation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .confidence-section {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 20px;
+  }
+}

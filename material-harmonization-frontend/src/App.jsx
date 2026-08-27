@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HarmonizationRecommendation from "./pages/HarmonizationRecommendation";
 
 import Sidebar from "./components/Sidebar";
 
@@ -33,6 +34,11 @@ function App() {
             <Route
               path="/validation"
               element={<Validation />}
+            />
+
+            <Route
+              path="/harmonization-recommendation"
+              element={<HarmonizationRecommendation />}
             />
 
             <Route

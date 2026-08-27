@@ -209,18 +209,15 @@ function AIMatching() {
                 <button
                   className="review-btn"
                   onClick={() =>
-                    navigate("/validation", {
-                      state: {
+                    navigate("/harmonization-recommendation", {
+                        state: {
                         sourceMaterial: selectedSourceMaterial,
-                        matchedMaterial:
-                          selectedMatch?.matchedMaterial,
-                        similarity:
-                          selectedMatch?.similarity,
-                        matchType:
-                          selectedMatch?.matchType,
-                      },
+                        matchedMaterial: match.matchedMaterial,
+                        similarity: match.similarity,
+                        matchType: match.matchType,
+                        },
                     })
-                  }
+                    }
                 >
                   Generate Harmonization Recommendation →
                 </button>
